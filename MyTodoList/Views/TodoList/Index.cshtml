@@ -1,0 +1,65 @@
+﻿@{
+    ViewData["Title"] = "Index";
+}
+
+<h4 id="msg"></h4>
+
+<p class="title"> My Todo List </p>
+@(Html.Kendo().Grid<Todo.Domain.TodoList.TodoModel>()
+    .Name("grid")
+    .Editable(editable => editable.Mode(GridEditMode.InCell))
+    .Events(events => events
+        .Edit("onEdit")
+    )
+    .ToolBar(tools =>
+        {
+            tools.Create();
+            tools.Save();
+        })
+    .Pageable()
+    .Sortable()
+    .Groupable()
+    .DataSource(dataSource => dataSource
+        .Ajax()
+        .PageSize(10)
+        .Model(model => model.Id(p => p.id))
+        .Events(events => events.Error("onError"))
+        .Read(read => read.Action("Select", "TodoList"))
+        .Create(update => update.Action("Create", "TodoList"))
+        .Update(update => update.Action("Update", "TodoList"))
+        .Destroy(update => update.Action("Destroy", "TodoList"))
+    )
+    .Columns(columns =>
+    {
+        columns.Bound(p => p.id).Hidden();
+        columns.Bound(p => p.name);
+        columns.Bound(p => p.due_date).Format("{0:MM/dd/yyyy}");
+        columns.Bound(p => p.desc);
+        columns.Bound(p => p.done);
+        columns.Command(command => { command.Destroy(); }).Width(250);
+    })
+)
+
+@section scripts {
+    <script type="text/javascript">
+        function onEdit(e) {
+            var container = e.container;
+            container.css("background-color", "#90EE90");
+        }
+        function onError(e) {
+            if (e.errors) {
+                var message = "Errors:\n";
+                if (e.status == "customerror") {
+                    $.each(e.errors, function (key, value) {
+                        message += value + "\n";
+                    });
+                }
+                else {
+                    message += "Generic server error." + "\n";
+                }
+                
+                alert(message);
+            }
+        }
+    </script>
+}
