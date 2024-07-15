@@ -1,0 +1,44 @@
+﻿
+@{  
+}
+
+
+@(Html.Kendo().DataSource<Todo.Domain.TodoList.Account>()
+    .Name("dataSource1")
+    .Ajax(dataSource => dataSource
+        .Read(read => read.Action("Read", "User"))
+    .ServerOperation(true)
+    .PageSize(12)
+
+    )
+)
+
+@(Html.Kendo().Grid<Todo.Domain.TodoList.Account>()
+    .Name("grid")
+    .Columns(columns =>
+    {
+        columns.Bound(p => p.id);
+        columns.Bound(p => p.name).Width(100);
+    })
+    .Pageable()
+    .Scrollable()
+    .DataSource("dataSource1")
+)
+
+@section scripts {
+    <script type="text/javascript">
+        function error_handler(e) { 
+            if (e.errors) {
+                var message = "Errors:\n";
+                $.each(e.errors, function (key, value) {
+                    if ('errors' in value) {
+                        $.each(value.errors, function () {
+                            message += this + "\n";
+                        });
+                    }
+                });
+                alert(message);
+            }
+        }
+    </script>
+}

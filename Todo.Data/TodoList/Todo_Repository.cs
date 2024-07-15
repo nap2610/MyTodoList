@@ -1,8 +1,7 @@
 ﻿using Dapper.Contrib.Extensions;
-using System.Threading.Tasks;
+using Todo.Data.Infrastructure;
 using Todo.Domain.BaseResponse;
 using Todo.Domain.TodoList;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Todo.Data.TodoList
 {

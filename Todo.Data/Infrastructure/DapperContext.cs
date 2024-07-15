@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using System.Data;
 
-namespace Todo.Data.TodoList
+namespace Todo.Data.Infrastructure
 {
     public class DapperContext
     {

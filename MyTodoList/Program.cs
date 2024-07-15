@@ -1,20 +1,35 @@
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Newtonsoft.Json.Serialization;
-using Todo.Data.TodoList;
+using Todo.Data.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()
-        .AddNewtonsoftJson(options =>
-        {
-            options.SerializerSettings.ContractResolver = new DefaultContractResolver();
-        });
+    .AddNewtonsoftJson(options =>
+    {
+        options.SerializerSettings.ContractResolver = new DefaultContractResolver();
+    });
 
 //ADD DBCONTEXT
 builder.Services.AddSingleton<DapperContext>();
 
-//ADD Interface to Class
-builder.Services.AddTransient<ITodo_Repository, Todo_Repository>();
+
+#region AutoFac
+
+// Configure Autofac
+builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
+builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
+{
+    // Register all repository classes from the referenced assembly
+    containerBuilder.RegisterModule(new InfrastructureAutofac());
+});
+
+#endregion
+
+//ADD Interface to Class @@-- dont use anymore --@@
+/*builder.Services.AddTransient<ITodo_Repository, Todo_Repository>();*/
 
 // Add Kendo UI 
 builder.Services.AddKendo();
