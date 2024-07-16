@@ -7,7 +7,8 @@ using Todo.Data.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
 // Register the exception handler middleware to the application.
-/*builder.Services.AddExceptionHandler<GlobalExceptionHandler>();*/
+/*builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+ builder.Services.AddProblemDetails();*/
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()
@@ -38,7 +39,7 @@ builder.Services.AddKendo();
 var app = builder.Build();
 
 #region Middleware
-// Default Exception Handling Middleware in .NET
+// Default Global Exception Handling Middleware in .NET
 /*app.UseExceptionHandler(builder =>
 {
 
@@ -47,7 +48,7 @@ var app = builder.Build();
 //Custom Exceptions
 
 // Custom Global Middleware handler error
-app.UseMiddleware<ErrorHandlerMiddleware>();
+/*app.UseMiddleware<ErrorHandlerMiddleware>();*/
 #endregion
 
 // Configure the HTTP request pipeline.
