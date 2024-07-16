@@ -1,9 +1,13 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using MyTodoList.App.ErrorHandling;
 using Newtonsoft.Json.Serialization;
 using Todo.Data.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Register the exception handler middleware to the application.
+/*builder.Services.AddExceptionHandler<GlobalExceptionHandler>();*/
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()
@@ -15,9 +19,7 @@ builder.Services.AddControllersWithViews()
 //ADD DBCONTEXT
 builder.Services.AddSingleton<DapperContext>();
 
-
 #region AutoFac
-
 // Configure Autofac
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
 builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
@@ -25,7 +27,6 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
     // Register all repository classes from the referenced assembly
     containerBuilder.RegisterModule(new InfrastructureAutofac());
 });
-
 #endregion
 
 //ADD Interface to Class @@-- dont use anymore --@@
@@ -36,11 +37,23 @@ builder.Services.AddKendo();
 
 var app = builder.Build();
 
+#region Middleware
+// Default Exception Handling Middleware in .NET
+/*app.UseExceptionHandler(builder =>
+{
+
+});*/
+
+//Custom Exceptions
+
+#endregion
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
 }
+
 app.UseStaticFiles();
 
 app.UseRouting();

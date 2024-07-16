@@ -1,4 +1,5 @@
 ﻿using Dapper.Contrib.Extensions;
+using Todo.Data.CustomErrorHandling;
 using Todo.Data.Infrastructure;
 using Todo.Domain.BaseResponse;
 using Todo.Domain.TodoList;
@@ -91,13 +92,14 @@ namespace Todo.Data.TodoList
                 // Dapper Contrib Get
                 var todo = await connection.GetAsync<TodoModel>(id);
 
+                if (todo is null)
+                {
+                    throw new TodoNotFoundException(id);
+                }
+
                 response.success = true;
                 response.data = todo;
 
-                if (todo == null)
-                {
-                    throw new InvalidOperationException($"User with Id {id} not found.");
-                }
             }
             catch (Exception ex)
             {

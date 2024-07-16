@@ -2,6 +2,7 @@
 using Kendo.Mvc.UI;
 using Microsoft.AspNetCore.Mvc;
 using Todo.Data.TodoList;
+using Todo.Domain.BaseResponse;
 using Todo.Domain.TodoList;
 
 namespace MyTodoList.App.Controllers
@@ -16,10 +17,20 @@ namespace MyTodoList.App.Controllers
             _crud = crud;
         }
 
-
         public IActionResult Index()
         {
+            /*throw new Exception("Throw a exception to test");*/
             return View();
+        }
+
+        public async Task<string> GetTodoList(int id)
+        {
+            var rs = await _crud.GetById(id);
+            if (!rs.success)
+            {
+                return rs.message;
+            }
+            return rs.data.name;
         }
 
         public async Task<ActionResult> Select([DataSourceRequest] DataSourceRequest dsrequest)
@@ -32,7 +43,7 @@ namespace MyTodoList.App.Controllers
             {
                 return Json(new DataSourceResult
                 {
-                    Errors = new [] { rs.message },
+                    Errors = new[] { rs.message },
                 });
             }
 
