@@ -40,10 +40,7 @@ var app = builder.Build();
 
 #region Middleware
 // Default Global Exception Handling Middleware in .NET
-/*app.UseExceptionHandler(builder =>
-{
-
-});*/
+/*app.UseExceptionHandler();*/
 
 //Custom Exceptions
 
