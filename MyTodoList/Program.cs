@@ -46,6 +46,8 @@ var app = builder.Build();
 
 //Custom Exceptions
 
+// Custom Global Middleware handler error
+app.UseMiddleware<ErrorHandlerMiddleware>();
 #endregion
 
 // Configure the HTTP request pipeline.
