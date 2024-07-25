@@ -5,7 +5,8 @@
 <h4 id="msg"></h4>
 
 <p class="title"> My Todo List </p>
-@(Html.Kendo().Grid<Todo.Domain.TodoList.TodoModel>()
+@(
+Html.Kendo().Grid<Todo.Domain.TodoList.TodoModel>()
     .Name("grid")
     .Editable(editable => editable.Mode(GridEditMode.InCell))
     .Events(events => events
@@ -19,10 +20,15 @@
     .Pageable()
     .Sortable()
     .Groupable()
+    .Events(events => events.DataBound("onDataBound"))
     .DataSource(dataSource => dataSource
         .Ajax()
         .PageSize(10)
-        .Model(model => model.Id(p => p.id))
+        .Model(model =>
+        {
+            model.Id(p => p.id);
+
+        })
         .Events(events => events.Error("onError"))
         .Read(read => read.Action("Select", "TodoList"))
         .Create(update => update.Action("Create", "TodoList"))
@@ -32,20 +38,45 @@
     .Columns(columns =>
     {
         columns.Bound(p => p.id).Hidden();
-        columns.Bound(p => p.name);
-        columns.Bound(p => p.due_date).Format("{0:MM/dd/yyyy}");
-        columns.Bound(p => p.desc);
-        columns.Bound(p => p.done);
+        columns.Bound(p => p.name).Title("Name").Title("Title");
+        columns.Bound(p => p.due_date).Format("{0:dd-MM-yyyy}").Title("Date");
+        columns.Bound(p => p.desc).Title("Description");
+        columns.Bound(p => p.done).Title("Is done");//.ClientTemplate("<span id='badge_#=id#' class='badgeTemplate'></span>");
         columns.Command(command => { command.Destroy(); }).Width(250);
     })
 )
 
 @section scripts {
     <script type="text/javascript">
-        function onEdit(e) {
-            var container = e.container;
-            container.css("background-color", "#90EE90");
+
+        function onDataBound(e) {
+            
+            /*var grid = this;
+            grid.table.find("tr").each(function () {
+                var dataItem = grid.dataItem(this);
+                var themeColor = dataItem.done ? 'success' : 'error';
+                var text = dataItem.done ? 'done' : 'not yet';
+
+                $(this).find('script').each(function () {
+                    eval($(this).html());
+                });
+
+                $(this).find(".badgeTemplate").kendoBadge({
+                    themeColor: themeColor,
+                    text: text,
+                });
+
+                kendo.bind($(this), dataItem);
+            });*/
         }
+
+        function onEdit(e) {
+            $('input#done').removeAttr('data-val-required');
+            var container = e.container;
+            container.css("font-weight", "500");
+            container.css( "color", "blue" );
+        }
+
         function onError(e) {
             if (e.errors) {
                 var message = "Errors:\n";
@@ -63,3 +94,10 @@
         }
     </script>
 }
+
+<style>
+    .k-table-td .text-box {
+        border: none;
+        outline: none;
+    }
+</style>

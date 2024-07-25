@@ -8,8 +8,9 @@ namespace MyTodoList.App.ErrorHandling
 {
 
     public class GlobalExceptionHandler
-        (IHostEnvironment hostEnvironment, ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+        ( ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
     {
+
 
         public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,

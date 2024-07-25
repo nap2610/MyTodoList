@@ -14,6 +14,6 @@ namespace Todo.Domain.TodoList
         /*        [Column(TypeName = "date")]*/
         public DateTime due_date { get; set; }
 
-        public int done { get; set; }
+        public bool done { get; set; }
     }
 }

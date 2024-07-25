@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+﻿    using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using System.Data;
 
@@ -13,7 +13,7 @@ namespace Todo.Data.Infrastructure
         {
             _configuration = configuration;
             _connectionString = _configuration.GetConnectionString("DefaultConnection")
-                ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found."); ;
+                ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
         }
 
         public IDbConnection CreateConnection()
