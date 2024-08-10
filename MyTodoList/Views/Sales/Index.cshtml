@@ -1,0 +1,53 @@
+﻿
+@{
+    ViewData["Title"] = "Excel Import";
+}
+
+
+<h2>Import Excel Data</h2>
+
+<input type="file" id="excelFile" />
+<button id="uploadBtn">Upload</button>
+
+<div id="grid"></div>
+
+<script>
+    $("#uploadBtn").click(function () {
+        var file = $("#excelFile")[0].files[0];
+        var formData = new FormData();
+        formData.append("file", file);
+
+        $.ajax({
+            url: '@Url.Action("Upload", "Home")',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (data) {
+                $("#grid").kendoGrid({
+                    dataSource: {
+                        data: data,
+                        schema: {
+                            model: {
+                                fields: {
+                                    Name: { type: "string" },
+                                    Age: { type: "number" },
+                                    Address: { type: "string" }
+                                }
+                            }
+                        },
+                        pageSize: 20
+                    },
+                    height: 550,
+                    pageable: true,
+                    columns: [
+                        { field: "Name", title: "Name" },
+                        { field: "Age", title: "Age" },
+                        { field: "Address", title: "Address" }
+                    ]
+                });
+            }
+        });
+    });
+</script>
+

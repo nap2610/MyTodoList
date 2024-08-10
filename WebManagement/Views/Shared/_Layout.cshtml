@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - WebManagement</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/js/bootstrap.min.js" />
+
+    @* Bootstrap & jQuery: *@
+    <link href="https://kendo.cdn.telerik.com/themes/8.2.1/default/default-ocean-blue.css" rel="stylesheet" type="text/css" />
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    
+    @* Add the Kendo UI scripts: *@
+    <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
+    <script src="https://kendo.cdn.telerik.com/2024.3.806/js/kendo.all.min.js"></script>
+    <script src="https://kendo.cdn.telerik.com/2024.3.806/js/kendo.aspnetmvc.min.js"></script>
+
+    @* License: *@
+    <script src="~/kendo-ui-license.js"></script>
+    <style>
+        body{
+            caret-color: transparent;
+        }
+
+        .nav-bar{
+            margin-top: 15px;
+            width 100%;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .nav-bar div{
+            display: flex;
+            align-items: baseline;
+        }
+
+        .nav-bar div span {
+            font-size: 20px;
+            margin-right: 15px;
+        }
+
+        .nav-bar div ul li{
+            list-style-type: none;  
+            display: inline;
+            margin-right: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <div>
+            <span> HR </span>
+            <ul>
+                <li>
+                    <a href="#">Admin</a>
+                </li>
+                <li>
+                    <a href="#">Staff</a>
+                </li>
+                <li>
+                    <a href="#">Shop</a>
+                </li>
+                <li>
+                    <a asp-action="Customer" asp-controller="HR">Customer</a>
+                </li>
+            </ul>
+        </div>
+
+        <div>
+            <span> Package </span>
+            <ul>
+                <li>
+                    <a asp-action="Index" asp-controller="Package">Transport</a>
+                </li>
+                <li>
+                    <a href="#">Order</a>
+                </li>
+            </ul>
+        </div>
+   </div>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+    
+</body>
+</html>

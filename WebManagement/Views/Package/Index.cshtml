@@ -1,0 +1,201 @@
+﻿@* @model IEnumerable<Todo.Domain.Sales.TransportBill>
+ *@
+@{
+}
+
+<div class="row mt-3 mb-3">
+    <div class="col-sm-9">
+        <div class="mb-1">
+            <div style="display:inline-block;min-width:70px">
+                <span class="badge bg-success bg-gradient text-white">Average</span>
+            </div>
+            <span class="fw-bold" id="avgCod" style="letter-spacing:.5px;"></span>
+        </div>
+
+        <div class="mb-1">
+            <div style="display:inline-block;min-width:70px">
+                <span class="badge bg-danger bg-gradient text-white">Sum</span>
+            </div>
+            <span class="fw-bold" id="sumCod" style="letter-spacing:.5px;"></span>
+        </div>
+
+        <div class="mb-1">
+            <div class="me-3" style="display:inline-block;min-width:100px;">
+                <span class="badge bg-secondary bg-gradient text-white">Min</span>
+                -
+                <span class="badge bg-primary bg-gradient text-white">Max</span>
+            </div>
+            
+
+            <div style="display:inline-block">
+                <span class="fw-bold" id="minCod" style="letter-spacing:.5px;"></span>
+                -
+                <span class="fw-bold" id="maxCod" style="letter-spacing:.5px;"></span>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="col-sm-3"> 
+        <span class="fw-bold">Import Excel Data</span>
+        <form class="mt-1 mb-4" asp-action="Upload" asp-controller="Package" enctype="multipart/form-data" method="post">
+            <div class="input-group input-group-sm">
+                <input type="file" name="file" class="form-control">
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@(
+Html.Kendo().Grid<TransportBill>()
+        .Name("grid")
+        //.Sortable()
+        //.Filterable()
+        //.Groupable()
+        .Scrollable()  
+        .Pageable(pager => pager
+            .Refresh(true)
+            .PageSizes(new[] { 5, 10, 15, 20, 30, 50 })
+            .ButtonCount(5)
+        )
+        .Events(e =>
+        {
+            e.DataBound("onDataBound");
+        })
+        .DataSource(dataSource => dataSource
+            .Ajax()
+            .Read(read => read.Action("Transport_Read", "Package"))
+            .PageSize(10)
+            .ServerOperation(false)
+            .Model( model =>
+            {
+                model.Id(field => field.transport_id);
+                model.Field(field => field.transport_id).Editable(false);
+                model.Field(field => field.orders.order_id).Editable(false);
+            })
+            .Aggregates(aggregates =>
+            {
+                aggregates.Add(ts => ts.cod).Average().Sum().Min().Max();
+            })
+        )
+        .Columns(columns =>
+        {
+            columns.Select().Width(50)
+            .ClientHeaderTemplate(@"<input tabindex='-1' id='header-check-all' class='k-select-checkbox 
+                k-checkbox k-checkbox-md k-rounded-md' data-role='checkbox' aria-label='Select all rows' type='checkbox'/>")
+            .ClientFooterTemplate(@"<input tabindex='-1' id='footer-check-all' class='k-select-checkbox 
+                k-checkbox k-checkbox-md k-rounded-md' data-role='checkbox' aria-label='Select all rows' type='checkbox'/>");
+            columns.Bound(ts => ts.transport_id).Title("Ship Code");
+            columns.Bound(ts => ts.transport_name).Title("Products Name").Width("150").ClientTemplate("<div class='text-ellipsis'>#= transport_name #</div>");
+            //columns.Bound(ts => ts.shipping_charges).Title("Charges").Format("{0:N0}₫");
+            columns.Bound(ts => ts.cod).Title("COD").Format("{0:N0} ₫");
+                //.ClientFooterTemplate("Avg: #=average#");
+            //columns.Bound(ts => ts.other_fee).Title("Other Fee").Format("{0:N0}₫");
+            //columns.Bound(ts => ts.weight).Title("Weight");
+            columns.Bound(ts => ts.problem_type).Title("Problem").Width("150").ClientTemplate("<div class='text-ellipsis'>#= problem_type #</div>");
+                //.ClientFooterTemplate("Count: #=count#");
+            columns.Bound(ts => ts.status).Title("Status");
+            //columns.Bound(ts => ts.delivery_service).Title("Delivery Service");
+            //columns.Bound(ts => ts.payment_method).Title("Payment Method");
+            //columns.Bound(ts => ts.description).Title("Description").Width("200").ClientTemplate("<div class='text-ellipsis'>#= description #</div>");
+            columns.Bound(ts => ts.orders.order_id).Title("Ord Code");
+            //columns.Bound(ts => ts.orders.creation_time).Title("Cre Time").ClientTemplate("#= kendo.toString(kendo.parseDate(orders.creation_time), 'h:MM dd-MM-yyyy') #");
+            columns.Bound(ts => ts.orders.customer.name).Title("Customer");
+            //columns.Bound(ts => ts.orders.customer.phone).Title("Phone");
+            //columns.Bound(ts => ts.orders.customer.addresses.province).Title("Address");
+            columns.Bound(ts => ts.orders.shop.name).Title("Shop");
+            //columns.Bound(ts => ts.orders.shop.phone).Title("Phone");
+            //columns.Bound(ts => ts.orders.shop.addresses.ward).Title("From");
+        })
+        .PersistSelection()
+        .Resizable(resize => resize.Columns(true))
+)
+
+<script>
+
+    function onDataBound(e) {
+        var grid = e.sender;
+        var data = grid.dataSource.view(); // Get current page data
+
+        // --Average CACULATE
+        var avgCod = grid.dataSource.aggregates().cod.average;
+        var sumCod = grid.dataSource.aggregates().cod.sum;
+        var minCod = grid.dataSource.aggregates().cod.min;
+        var maxCod = grid.dataSource.aggregates().cod.max;
+
+        $("#avgCod").text(formatVND(avgCod));
+        $("#sumCod").text(formatVND(sumCod));
+        $("#minCod").text(formatVND(minCod));
+        $("#maxCod").text(formatVND(maxCod));
+
+        
+        // --FOOTER CACULATE
+        let totalCod = 0;
+        let totalProblem = 0;
+
+        for (var i = 0; i < data.length; i++) {
+            totalCod += data[i].cod; // Adjust the property name as necessary
+            if (data[i].problem_type != "") {
+                totalProblem++;
+            }
+        }
+
+        let footerCodSum = kendo.template($("#footer-cod-sum").html());
+        let footerProblemCount = kendo.template($("#footer-problem-count").html());
+
+        grid.footer.find("td").eq(3).html(footerCodSum({ sum: formatVND(totalCod) }));
+        grid.footer.find("td").eq(4).html(footerProblemCount({ count: totalProblem }));
+
+
+        // --CHECKBOX ROW
+        $(grid.element).find("input#footer-check-all").on("change", function (e) {
+            if ($(this).is(':checked')) { // If the checkbox is checked
+                let masterRows = $("#grid .k-grid-table .k-master-row"); // Select all Grid rows.
+                grid.select(masterRows);
+            } else {
+                grid.clearSelection(); // Clear the selected rows.
+            }
+        });
+
+        $(grid.element).find("input#header-check-all").on("change", function (e) {
+        $(gridInsgridtance.element).find("input#footer-check-all").prop('checked', $(this).is(':checked')); // Toggle the footer checkbox based on the header checkbox.
+        });
+    }
+
+    function onError(e) {
+        if (e.errors) {
+            var message = "Errors:\n";
+            if (e.status == "customerror") {
+                $.each(e.errors, function (key, value) {
+                    message += value + "\n";
+                });
+            }
+            else {
+                message += "Generic server error." + "\n";
+            }   
+            alert(message);
+        }
+    }
+
+    function formatVND(fm) {
+        return parseFloat(fm).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + " ₫";
+    }
+</script>
+
+<script id="footer-cod-sum" type="text/x-kendo-template">Sum: #=sum#</script>
+<script id="footer-problem-count" type="text/x-kendo-template">Count: #=count# problem</script>
+
+<style>
+    .k-grid-footer td{
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .text-ellipsis {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>

@@ -29,7 +29,11 @@ Html.Kendo().Grid<Todo.Domain.TodoList.TodoModel>()
             model.Id(p => p.id);
 
         })
-        .Events(events => events.Error("onError"))
+        .Events(events =>
+        {
+            events.Error("onError");
+            events.Push("onPush");
+        })
         .Read(read => read.Action("Select", "TodoList"))
         .Create(update => update.Action("Create", "TodoList"))
         .Update(update => update.Action("Update", "TodoList"))
@@ -68,6 +72,10 @@ Html.Kendo().Grid<Todo.Domain.TodoList.TodoModel>()
 
                 kendo.bind($(this), dataItem);
             });*/
+        }
+
+        function onPush(e) {
+            console.log("Pushing");
         }
 
         function onEdit(e) {
