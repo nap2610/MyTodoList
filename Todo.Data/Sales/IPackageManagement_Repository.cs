@@ -12,12 +12,12 @@ namespace Todo.Data.Sales
 {
     public interface IPackageManagement_Repository
     {
-        Task<MessageStatus<List<TransportBill>>> GetAllPackage();
-
-        Task<MessageStatus<long>> AddTransport(TransportBill trans);
-        Task<MessageStatus<long>> AddOrder(OrderBill order);
-        Task<MessageStatus<long>> AddUser(Employee user);
+        Task<MessageStatus<List<Shipping>>> GetAllPackage();
+        Task<MessageStatus<List<Order>>> GetOrderByUserId(int id);
+        Task<MessageStatus<long>> AddTransport(Shipping trans);
+        Task<MessageStatus<long>> AddOrder(Order order);
+        Task<MessageStatus<long>> AddUser(User user);
         Task<MessageStatus<long>> AddAddress(Address address);
-        Task<MessageStatus<long>> UploadExcel(UserDto customer, AddressDto address, OrderDto order, TransportDto trans);
+        Task<MessageStatus<string>> UploadExcel(UserDto customer, AddressDto address, OrderDto order, ShippingDto trans);
     }
 }

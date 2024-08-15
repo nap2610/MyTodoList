@@ -3,6 +3,7 @@ using Autofac;
 using Newtonsoft.Json.Serialization;
 using Todo.Data.Infrastructure;
 using OfficeOpenXml;
+using Autofac.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ builder.Services.AddControllersWithViews()
     .AddNewtonsoftJson(options =>
     {
         options.SerializerSettings.ContractResolver = new DefaultContractResolver();
+        //options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
     });
 
 builder.Services.AddSingleton<DapperContext>();
@@ -30,6 +32,20 @@ builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
 });
 #endregion
 
+#region Session
+    builder.Services.AddDistributedMemoryCache();
+
+    builder.Services.AddSession(options =>
+    {
+        options.IdleTimeout = TimeSpan.FromSeconds(10);
+        options.Cookie.HttpOnly = true;
+        options.Cookie.IsEssential = true;
+    });
+
+    // Add IHttpContextAccessor
+    builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+#endregion
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -42,6 +58,8 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthorization();
+
+app.UseSession();
 
 app.MapControllerRoute(
     name: "default",

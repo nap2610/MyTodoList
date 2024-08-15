@@ -5,8 +5,8 @@ using Todo.Domain.Sales;
 
 namespace Todo.Data.Sales
 {
-    public interface IAuth_Repository : IRepository<MessageStatus<Employee>>
+    public interface IAuth_Repository : IRepository<MessageStatus<User>>
     {
-        Task<MessageStatus<Employee>> Login(Employee employee); 
+        Task<MessageStatus<User>> CheckLogin(User emp);
     }
 }

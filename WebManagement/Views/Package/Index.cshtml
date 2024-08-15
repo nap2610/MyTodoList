@@ -3,20 +3,56 @@
 @{
 }
 
+@if(TempData["Msg"] != null){
+    if ((bool)TempData["Success"])
+    {
+        <script>
+            $.gritter.add({
+                // (string | mandatory) the heading of the notification
+                title: 'Upload',
+                // (string | mandatory) the text inside the notification
+                text: '{@TempData["Msg"]}',
+                // (string | optional) the image to display on the left
+                time: '10000',
+                // (string) specify font-face icon  class for close message
+                close_icon: 'l-arrows-remove s16',
+                class_name: 'success-notice'
+            });
+        </script>
+    }
+    else
+    {
+        <script>
+            $.gritter.add({
+                // (string | mandatory) the heading of the notification
+                title: 'Upload',
+                // (string | mandatory) the text inside the notification
+                text: '{@TempData["Msg"]}',
+                // (string | optional) the image to display on the left
+                time: '10000',
+                // (string) specify font-face icon  class for close message
+                close_icon: 'l-arrows-remove s16',
+                class_name: 'error-notice'
+            });
+        </script>
+    }
+}
+
 <div class="row mt-3 mb-3">
     <div class="col-sm-9">
+
         <div class="mb-1">
             <div style="display:inline-block;min-width:70px">
                 <span class="badge bg-success bg-gradient text-white">Average</span>
             </div>
-            <span class="fw-bold" id="avgCod" style="letter-spacing:.5px;"></span>
+            <span class="avggText" id="avgCod"></span>
         </div>
 
         <div class="mb-1">
             <div style="display:inline-block;min-width:70px">
                 <span class="badge bg-danger bg-gradient text-white">Sum</span>
             </div>
-            <span class="fw-bold" id="sumCod" style="letter-spacing:.5px;"></span>
+            <span class="avggText" id="sumCod"></span>
         </div>
 
         <div class="mb-1">
@@ -26,14 +62,13 @@
                 <span class="badge bg-primary bg-gradient text-white">Max</span>
             </div>
             
-
             <div style="display:inline-block">
-                <span class="fw-bold" id="minCod" style="letter-spacing:.5px;"></span>
+                <span class="avggText" id="minCod"></span>
                 -
-                <span class="fw-bold" id="maxCod" style="letter-spacing:.5px;"></span>
+                <span class="avggText" id="maxCod"></span>
             </div>
-            
         </div>
+
     </div>
 
     <div class="col-sm-3"> 
@@ -48,11 +83,11 @@
 </div>
 
 @(
-Html.Kendo().Grid<TransportBill>()
+Html.Kendo().Grid<Shipping>()
         .Name("grid")
         //.Sortable()
         //.Filterable()
-        //.Groupable()
+        .Groupable()
         .Scrollable()  
         .Pageable(pager => pager
             .Refresh(true)
@@ -63,48 +98,63 @@ Html.Kendo().Grid<TransportBill>()
         {
             e.DataBound("onDataBound");
         })
+        @* .Selectable(selectable => selectable
+        .Mode(GridSelectionMode.Multiple)
+            .CellAggregates(true)
+        )
+        .StatusBarTemplate(Html.Kendo().Template()
+            .AddHtml(@"${data.aggregates.count>0?`<div>Cells count: ${data.aggregates['count']} Min: ${data.aggregates['min']} 
+                Max: ${data.aggregates['max']} Sum: ${data.aggregates['sum']} Average: ${formatAggregate(data.aggregates['average'], 'average')} 
+                Earliest Date: ${formatAggregate(data.aggregates['earliest'], 'earliest')} 
+                Latest Date: ${formatAggregate(data.aggregates['latest'], 'latest')}</div>`:'No rows are selected'}
+            ")
+        )
+        .Navigatable() *@
         .DataSource(dataSource => dataSource
             .Ajax()
-            .Read(read => read.Action("Transport_Read", "Package"))
+            .Read(read => read.Action("TransportWithOrder_Read", "Package"))
+            .Events(events => events.Error("onError"))
             .PageSize(10)
             .ServerOperation(false)
             .Model( model =>
             {
-                model.Id(field => field.transport_id);
-                model.Field(field => field.transport_id).Editable(false);
-                model.Field(field => field.orders.order_id).Editable(false);
+                model.Id(field => field.id);
+                model.Field(field => field.ship_code).Editable(false);
+                model.Field(field => field.Order.order_code).Editable(false);
             })
             .Aggregates(aggregates =>
             {
-                aggregates.Add(ts => ts.cod).Average().Sum().Min().Max();
+                aggregates.Add(e => e.cod).Sum().Min().Max();
             })
+        //.Group( groups => groups.Add(p => p.Order.customer_id))
         )
         .Columns(columns =>
         {
             columns.Select().Width(50)
-            .ClientHeaderTemplate(@"<input tabindex='-1' id='header-check-all' class='k-select-checkbox 
-                k-checkbox k-checkbox-md k-rounded-md' data-role='checkbox' aria-label='Select all rows' type='checkbox'/>")
-            .ClientFooterTemplate(@"<input tabindex='-1' id='footer-check-all' class='k-select-checkbox 
-                k-checkbox k-checkbox-md k-rounded-md' data-role='checkbox' aria-label='Select all rows' type='checkbox'/>");
-            columns.Bound(ts => ts.transport_id).Title("Ship Code");
-            columns.Bound(ts => ts.transport_name).Title("Products Name").Width("150").ClientTemplate("<div class='text-ellipsis'>#= transport_name #</div>");
+                .ClientHeaderTemplate(@"<input tabindex='-1' id='header-check-all' class='k-select-checkbox 
+                    k-checkbox k-checkbox-md k-rounded-md' data-role='checkbox' aria-label='Select all rows' type='checkbox'/>")
+                .ClientFooterTemplate(@"<input tabindex='-1' id='footer-check-all' class='k-select-checkbox 
+                    k-checkbox k-checkbox-md k-rounded-md' data-role='checkbox' aria-label='Select all rows' type='checkbox'/>");
+            columns.Bound(ts => ts.ship_code).Title("Ship Code").Hidden();
+            columns.Bound(ts => ts.ship_name).Title("Products Name").Width("150").ClientTemplate("<div class='text-ellipsis'>#= ship_name #</div>");
             //columns.Bound(ts => ts.shipping_charges).Title("Charges").Format("{0:N0}₫");
-            columns.Bound(ts => ts.cod).Title("COD").Format("{0:N0} ₫");
-                //.ClientFooterTemplate("Avg: #=average#");
+            columns.Bound(ts => ts.cod).Title("COD").Format("{0:N0} ₫")
+                .ClientFooterTemplate("<span id='footerSumCod'></span>");
             //columns.Bound(ts => ts.other_fee).Title("Other Fee").Format("{0:N0}₫");
             //columns.Bound(ts => ts.weight).Title("Weight");
-            columns.Bound(ts => ts.problem_type).Title("Problem").Width("150").ClientTemplate("<div class='text-ellipsis'>#= problem_type #</div>");
-                //.ClientFooterTemplate("Count: #=count#");
+            columns.Bound(ts => ts.problem_type).Title("Problem").Width("150").ClientTemplate("<div class='text-ellipsis'>#= problem_type #</div>")
+                .ClientFooterTemplate("<span id='footerCountProblem'></span>");
             columns.Bound(ts => ts.status).Title("Status");
-            //columns.Bound(ts => ts.delivery_service).Title("Delivery Service");
-            //columns.Bound(ts => ts.payment_method).Title("Payment Method");
-            //columns.Bound(ts => ts.description).Title("Description").Width("200").ClientTemplate("<div class='text-ellipsis'>#= description #</div>");
-            columns.Bound(ts => ts.orders.order_id).Title("Ord Code");
-            //columns.Bound(ts => ts.orders.creation_time).Title("Cre Time").ClientTemplate("#= kendo.toString(kendo.parseDate(orders.creation_time), 'h:MM dd-MM-yyyy') #");
-            columns.Bound(ts => ts.orders.customer.name).Title("Customer");
-            //columns.Bound(ts => ts.orders.customer.phone).Title("Phone");
+            columns.Bound(ts => ts.delivery_service).Title("Service");
+            //columns.Bound(ts => ts.Order.payment_method).Title("Payment Method");
+            columns.Bound(ts => ts.description).Title("Description").Width("150").ClientTemplate("<div class='text-ellipsis'>#= description #</div>");
+            columns.Bound(ts => ts.Order.order_code).Title("Ord Code").Hidden();
+            columns.Bound(ts => ts.Order.creation_time).Title("Cre Time").ClientTemplate("#= kendo.toString(kendo.parseDate(Order.creation_time), 'h:MM dd-MM-yyyy') #");
+            //columns.Bound(ts => ts.Order.customer_id).Title("CusId");
+            columns.Bound(ts => ts.Order.customer_first_name).Title("Customer");
+            //columns.Bound(ts => ts.Order.customer_phone_number).Title("Phone");
             //columns.Bound(ts => ts.orders.customer.addresses.province).Title("Address");
-            columns.Bound(ts => ts.orders.shop.name).Title("Shop");
+            columns.Bound(ts => ts.Order.shop_first_name).Title("Shop");
             //columns.Bound(ts => ts.orders.shop.phone).Title("Phone");
             //columns.Bound(ts => ts.orders.shop.addresses.ward).Title("From");
         })
@@ -115,10 +165,16 @@ Html.Kendo().Grid<TransportBill>()
 <script>
 
     function onDataBound(e) {
+
         var grid = e.sender;
         var data = grid.dataSource.view(); // Get current page data
 
+        $(".k-grouping-row").each(function (e) {
+            grid.collapseGroup(this);
+        });
+
         // --Average CACULATE
+        
         var avgCod = grid.dataSource.aggregates().cod.average;
         var sumCod = grid.dataSource.aggregates().cod.sum;
         var minCod = grid.dataSource.aggregates().cod.min;
@@ -128,7 +184,6 @@ Html.Kendo().Grid<TransportBill>()
         $("#sumCod").text(formatVND(sumCod));
         $("#minCod").text(formatVND(minCod));
         $("#maxCod").text(formatVND(maxCod));
-
         
         // --FOOTER CACULATE
         let totalCod = 0;
@@ -143,10 +198,12 @@ Html.Kendo().Grid<TransportBill>()
 
         let footerCodSum = kendo.template($("#footer-cod-sum").html());
         let footerProblemCount = kendo.template($("#footer-problem-count").html());
-
-        grid.footer.find("td").eq(3).html(footerCodSum({ sum: formatVND(totalCod) }));
-        grid.footer.find("td").eq(4).html(footerProblemCount({ count: totalProblem }));
-
+        
+        $('#footerSumCod').text(formatVND(totalCod));
+        $('#footerCountProblem').text(totalProblem);
+        //grid.footer.find("td").eq(3).html(footerCodSum({ sum: formatVND(totalCod) }));
+        //grid.footer.find("td").eq(4).html(footerProblemCount({ count: totalProblem }));
+        
 
         // --CHECKBOX ROW
         $(grid.element).find("input#footer-check-all").on("change", function (e) {
@@ -157,7 +214,7 @@ Html.Kendo().Grid<TransportBill>()
                 grid.clearSelection(); // Clear the selected rows.
             }
         });
-
+        document.getElementById
         $(grid.element).find("input#header-check-all").on("change", function (e) {
         $(gridInsgridtance.element).find("input#footer-check-all").prop('checked', $(this).is(':checked')); // Toggle the footer checkbox based on the header checkbox.
         });
@@ -174,28 +231,44 @@ Html.Kendo().Grid<TransportBill>()
             else {
                 message += "Generic server error." + "\n";
             }   
-            alert(message);
+            $.gritter.add({
+                // (string | mandatory) the heading of the notification
+                title: 'Load data',
+                // (string | mandatory) the text inside the notification
+                text: `${message}`,
+                // (string | optional) the image to display on the left
+                time: '10000',
+                // (string) specify font-face icon  class for close message
+                close_icon: 'l-arrows-remove s16',
+                class_name: 'error-notice'
+            });
         }
     }
 
     function formatVND(fm) {
         return parseFloat(fm).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + " ₫";
     }
+
+    function formatAggregate(aggregate, key) {
+        if (key === "average" || key === "sum" || key === "max" || key === "min") {
+            return kendo.toString(aggregate, "n");
+        }
+        if (key === "earliest" || key === "latest") {
+            return kendo.toString(aggregate, "dd/MM/yyyy");
+        }
+        return aggregate;
+    }
 </script>
 
 <script id="footer-cod-sum" type="text/x-kendo-template">Sum: #=sum#</script>
 <script id="footer-problem-count" type="text/x-kendo-template">Count: #=count# problem</script>
 
-<style>
-    .k-grid-footer td{
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+<style> 
+    .avggText{
+        font-size: 12px;
+        font-weight: 500;
     }
 
-    .text-ellipsis {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+    
+
 </style>

@@ -2,6 +2,7 @@
 using Kendo.Mvc.UI;
 using Microsoft.AspNetCore.Mvc;
 using Todo.Data.Sales;
+using Todo.Domain.Sales;
 
 namespace WebManagement.Controllers
 {
@@ -15,10 +16,17 @@ namespace WebManagement.Controllers
             CUSTOMER = 4,
         }
 
+        enum Active
+        {
+            DISABLE = 0,
+            ACTIVE = 1,
+        }
+        IAuth_Repository _authRepository;
         IHRManagement_Repository _hrRepository;
-        public HRController(IHRManagement_Repository hrRepository) 
+        public HRController(IHRManagement_Repository hrRepository, IAuth_Repository auth_Repository) 
         {
             _hrRepository = hrRepository;
+            _authRepository = auth_Repository;
         }
 
         public IActionResult Index()
@@ -26,9 +34,19 @@ namespace WebManagement.Controllers
             return View();
         }
 
-        public IActionResult Login()
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(User emp)
         {
-            return View();
+            var loginResult = await _authRepository.CheckLogin(emp);
+
+            if (loginResult.success)
+            {
+                HttpContext.Session.SetInt32("Role", emp.role_id);
+                return View("Customer");
+            }
+
+            return View("Index");
         }
 
         public IActionResult Customer()
@@ -36,10 +54,32 @@ namespace WebManagement.Controllers
             return View();
         }
 
+        public IActionResult Staff()
+        {
+            return View();
+        }
+
         public async Task<ActionResult> Customers_Read([DataSourceRequest] DataSourceRequest dsrequest)
         {
 
-            var employees = await _hrRepository.GetByRole((int)Role.SHOP);
+            var customers = await _hrRepository.GetAllCustomer();
+
+            // Check If Not Success -> return Error
+            if (!customers.success)
+            {
+                return Json(new DataSourceResult
+                {
+                    Errors = new[] { customers.message },
+                });
+            }
+
+            return new JsonResult(customers.data.ToDataSourceResult(dsrequest));
+        }
+
+        public async Task<ActionResult> Staffs_Read([DataSourceRequest] DataSourceRequest dsrequest)
+        {
+
+            var employees = await _hrRepository.GetByRole((int)Role.STAFF);
 
             // Check If Not Success -> return Error
             if (!employees.success)

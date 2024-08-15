@@ -1,22 +1,114 @@
 ﻿
-@{
-}
+<div class="mb-3">
+    <div>
+        <span> Highest Buyer </span>
+        <span></span>
+    </div>
+    <div>
+        <span> Best Seller Product </span>
+    </div>
+    <div>
+        <span> Most Buyer Province </span>
+    </div>
+</div>
 
-@(Html.Kendo().Grid<Employee>()
-        .Name("grid")
-        .Columns(columns =>
-        {
-            columns.Bound(e => e.user_id).Hidden();
-            columns.Bound(e => e.name);
-            columns.Bound(e => e.phone);
-        })
-        .DataSource(dataSource => dataSource
-            .Ajax()
-            .Read(read => read.Action("Customers_Read", "HR"))
-        )
+@(Html.Kendo().Grid<User>()
+    .Name("grid")
+    .Columns(columns =>
+    {
+        columns.Bound(e => e.id).Title("Id");
+        columns.Bound(e => e.first_name).Title("Name");
+        columns.Bound(e => e.phone_number).Title("Phone");
+        //columns.Bound(e => e.Order).Title("Order").ClientTemplate("#=showOrderCount(data.Order)#");
+        //columns.Bound(e => e.Order).Title("Amount").ClientTemplate("#=showOrderAmoutSum(data.Order)#");
+
+@*         columns.Bound(e => e.Address!.street).Title("Address").Width("400").ClientTemplate("<div class='text-ellipsis'>#= Address.street #</div>");
+        columns.Bound(e => e.Address!.postal_code).Title("Postal Code"); *@
+@*         columns.Bound(e => e.Order).Title("Count").ClientTemplate("<span id='countOrder'></span>");
+        columns.Bound(e => e.Order).Title("Total").ClientTemplate("<span id='sumAmountOrder'></span>"); *@
+    })
+    .DataSource(dataSource => dataSource
+        .Ajax()
+        .PageSize(10)
+        .Read(read => read.Action("Customers_Read", "HR"))
+        .Model(model =>
+            {
+                model.Id(field => field.id);
+            })
+    )
+    .ClientDetailTemplateId("template")
+    .Filterable()
+    .Sortable()
+    .Scrollable()
+    .Pageable()
 )
 
+<script id="template" type="text/kendo-tmpl">
+    @(Html.Kendo().TabStrip()
+        .Name("tabStrip_#=id#")
+        .SelectedIndex(0)
+        .Animation(animation => animation.Open(open => open.Fade(FadeDirection.In)))
+        .Items(items =>
+        {
+            items.Add().Text("Orders").Content(@<text>
+                @(Html.Kendo().Grid<Order>()
+                    .Name("grid_#=id#")
+                    .Columns(columns =>
+                    {
+                    columns.Bound(o => o.order_name).Title("Product Name").Width("180").ClientTemplate("<div class='text-ellipsis'>\\#= order_name \\#</div>");
+                    columns.Bound(o => o.Shipping.shipp_charges).Title("Ship charges").Format("{0:N0} ₫");
+                    columns.Bound(o => o.amount).Title("Amount").Format("{0:N0} ₫");
+                    columns.Bound(o => o.payment_method).Title("Payment");
+                    columns.Bound(o => o.creation_time).Title("Time").ClientTemplate("\\#= kendo.toString(kendo.parseDate(creation_time), 'h:MM dd-MM-yyyy') \\#");
+                    columns.Bound(o => o.shop_first_name).Title("Shop");
+                    columns.Bound(o => o.Shipping.status).Title("Status");
+                    columns.Bound(o => o.Shipping.problem_type).Title("Problem");
+                    })
+                    .DataSource(dataSource => dataSource
+                        .Ajax()
+                        .PageSize(5)
+                        .Aggregates( aggregates => {
+                            aggregates.Add(ord => ord.id).Count();
+                            aggregates.Add(ord => ord.amount).Sum();
+                        })
+                        .Read(read => read.Action("OrdersByUserId_Read", "Package", new{ id = "#=id#" })))
+                    .Events(events => events.DataBinding("onDataBound"))
+                    .Pageable()
+                    .Sortable()
+                    .Resizable(resize => resize.Columns(true))
+                    .ToClientTemplate()
+                )
+            </text>);
+        }).ToClientTemplate()
+    )
+</script>
+
+
+
 <script>
+    function showOrderCount(data) {
+        var i = 0;
+        for (var item of data) {
+            i++;
+        }
+        return i;
+    }
+
+    function showOrderAmoutSum(data) {
+        var i = 0;
+        for (var item of data) {
+            i += item.amount;
+        }
+        return formatVND(i);
+    }
+    function onDataBound(e) {
+        //var grid = e.sender;
+        //var data = grid.dataSource.view(); // Get current page data
+
+
+        //this.expandRow(this.tbody.find("tr.k-master-row").first());
+    }
+
     function onError(e) {
         if (e.errors) {
             var message = "Errors:\n";
@@ -32,4 +124,35 @@
             alert(message);
         }
     }
+
+    function formatVND(fm) {
+        return parseFloat(fm).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',') + " ₫";
+    }
 </script>
+
+<style>
+    .k-detail-cell .k-tabstrip .demo-section {
+        padding: 0.2em;
+    }
+
+    .customer-details ul {
+        list-style: none;
+        font-style: italic;
+        margin: 15px;
+        padding: 0;
+    }
+
+        .customer-details ul li {
+            margin: 0;
+            line-height: 1.7em;
+        }
+
+    .customer-details label {
+        display: inline-block;
+        width: 90px;
+        padding-right: 10px;
+        text-align: right;
+        font-style: normal;
+        font-weight: bold;
+    }
+</style>

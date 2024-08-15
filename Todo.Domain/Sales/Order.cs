@@ -1,11 +1,18 @@
-﻿using Dapper.Contrib.Extensions;
-using Todo.Domain.Sales;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Todo.Data.SalesDto
+namespace Todo.Domain.Sales
 {
     [Table("[Order]")]
-    public class OrderDto
+    public class Order
     {
+        [Key]
+        public int id { get; set; }
         public string order_code { get; set; }
         public string order_name { get; set; }
         public float amount { get; set; }
@@ -28,5 +35,16 @@ namespace Todo.Data.SalesDto
         public int customer_id { get; set; }
         public int shop_id { get; set; }
         public int staff_id { get; set; }
+
+        public Shipping Shipping { get; set; }
+
+        [ForeignKey("customer_id")]
+        public User Customer { get; set; }
+
+        [ForeignKey("shop_id")]
+        public User Shop { get; set; }
+
+        [ForeignKey("staff_id")]
+        public User Staff { get; set; }
     }
 }

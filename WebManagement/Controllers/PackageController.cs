@@ -31,7 +31,12 @@ namespace WebManagement.Controllers
          return View();
         }
 
-        public async Task<ActionResult> Transport_Read([DataSourceRequest] DataSourceRequest dsrequest)
+        public IActionResult Order()
+        {
+            return View();
+        }
+
+        public async Task<ActionResult> TransportWithOrder_Read([DataSourceRequest] DataSourceRequest dsrequest)
         {
 
             var transportPack = await _packageRepository.GetAllPackage();
@@ -46,6 +51,23 @@ namespace WebManagement.Controllers
             }
             
             return new JsonResult(transportPack.data.ToDataSourceResult(dsrequest));
+        }
+
+        public async Task<ActionResult> OrdersByUserId_Read(int id, [DataSourceRequest] DataSourceRequest dsrequest)
+        {
+
+            var orders = await _packageRepository.GetOrderByUserId(id);
+
+            // Check If Not Success -> return Error
+            if (!orders.success)
+            {
+                return Json(new DataSourceResult
+                {
+                    Errors = new[] { orders.message },
+                });
+            }
+
+            return new JsonResult(orders.data.ToDataSourceResult(dsrequest));
         }
 
         [HttpPost]
@@ -75,12 +97,11 @@ namespace WebManagement.Controllers
                             {
                                 userParts[1] = "No name";
                             }
-
                             var user = new UserDto
                             {
-                                user_id = userIdAndName,
-                                name = userParts[1],
-                                phone = worksheet.Cells[row, 15].Text,
+                                user_code = userIdAndName,
+                                first_name = userParts[1],
+                                phone_number = worksheet.Cells[row, 15].Text,
                                 role_id = (int)Role.CUSTOMER,
                             };
 
@@ -90,38 +111,49 @@ namespace WebManagement.Controllers
 
                             var address = new AddressDto
                             {
+                                address_code = addressParts[1],
                                 province = worksheet.Cells[row, 24].Text,
                                 city = worksheet.Cells[row, 25].Text,
                                 ward = addressParts[0],
                                 street = worksheet.Cells[row, 27].Text,
+                                phone_number = worksheet.Cells[row, 15].Text,
+                                postal_code = worksheet.Cells[row, 20].Text,
                             };
 
                             var order = new OrderDto
                             {
-                                order_id = worksheet.Cells[row, 14].Text,
+                                order_code = worksheet.Cells[row, 14].Text,
+                                order_name = worksheet.Cells[row, 4].Text,
+                                amount = float.TryParse(worksheet.Cells[row, 7].Text, out float Amount) ? Amount : 0,
+                                customer_first_name = userParts[1],
+                                customer_phone_number = worksheet.Cells[row, 15].Text,
+                                customer_province = worksheet.Cells[row, 24].Text,
+                                customer_city = worksheet.Cells[row, 25].Text,
+                                customer_ward = addressParts[0],
+                                customer_street = worksheet.Cells[row, 27].Text,
+                                shop_first_name = worksheet.Cells[row, 30].Text,
+                                shop_phone_number = worksheet.Cells[row, 31].Text,
+                                shop_street = worksheet.Cells[row, 33].Text,
+                                postal_code = worksheet.Cells[row, 20].Text,
+                                payment_method = worksheet.Cells[row, 19].Text,
                                 creation_time = DateTime.TryParse(worksheet.Cells[row, 28].Text, out DateTime CreationTime) ? CreationTime : new DateTime(),
                                 shop_id = 1,
                             };
 
-                            var transport = new TransportDto
+                            var transport = new ShippingDto
                             {
-                                transport_id = worksheet.Cells[row, 1].Text,
-                                transport_name = worksheet.Cells[row, 4].Text,
-                                type = worksheet.Cells[row, 5].Text,
-                                shipping_charges = float.TryParse(worksheet.Cells[row, 6].Text, out float ShippingCharges) ? ShippingCharges : 0,
+                                ship_code = worksheet.Cells[row, 1].Text,
+                                ship_name = worksheet.Cells[row, 4].Text,
+                                shipp_charges = float.TryParse(worksheet.Cells[row, 6].Text, out float ShippingCharges) ? ShippingCharges : 0,
                                 cod = float.TryParse(worksheet.Cells[row, 7].Text, out float Cod) ? Cod : 0,
                                 number_of_print = int.TryParse(worksheet.Cells[row, 10].Text, out int NumberOfPrint) ? NumberOfPrint : 0,
                                 status = worksheet.Cells[row, 11].Text,
                                 problem_type = worksheet.Cells[row, 13].Text,
-                                acknowledge_receipt = worksheet.Cells[row, 16].Text,
                                 weight = float.TryParse(worksheet.Cells[row, 17].Text, out float Weight) ? Weight : 0,
                                 other_fee = float.TryParse(worksheet.Cells[row, 18].Text, out float OtherFee) ? OtherFee : 0,
-                                payment_method = worksheet.Cells[row, 19].Text,
-                                postal_code = worksheet.Cells[row, 20].Text,
                                 hs_code = worksheet.Cells[row, 21].Text,
                                 delivery_service = worksheet.Cells[row, 22].Text,
                                 description = worksheet.Cells[row, 29].Text,
-                                order_id = worksheet.Cells[row, 14].Text,
                             };
 
                             await _packageRepository.UploadExcel(user, address, order, transport);

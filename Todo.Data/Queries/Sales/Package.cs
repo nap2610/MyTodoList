@@ -10,44 +10,82 @@ namespace Todo.Data.Queries.Sales
     {
         // Get Transport InnerJoin with Order User Address
         public static string GetAllPackageInfo => @"
-            SELECT
-            transport_id,
-            transport_name,
-            shipping_charges,
-            status,
-            problem_type,
-            cod,
-            weight,
-            other_fee,
-            payment_method,
-            delivery_service,
-            description,
-            postal_code,
-            hs_code,
-            ob.order_id,
-            ob.shop_id,
-            emp1.user_auto_id,
-            emp1.name,
-            emp1.phone,
-            emp2.user_auto_id,
-            emp2.name,
-            emp2.phone,
-            adr1.address_auto_id,
-            adr1.province,
-            adr1.city,
-            adr1.ward,
-            adr1.street,
-            adr2.address_auto_id,
-            adr2.ward,
-            adr2.street
-            FROM Transport_Bill as tp
-            inner join Order_Bill ob on tp.order_id = ob.order_id
-            inner join Employee as emp1 on ob.customer_id = emp1.user_auto_id 
-            inner join Employee as emp2 on ob.shop_id = emp2.user_auto_id 
-            inner join Address as adr1 on adr1.address_auto_id = emp1.user_auto_id
-            inner join Address as adr2 on adr2.address_auto_id = emp2.user_auto_id
+            select 
+                ship.id,
+                ship_code,
+                ship_name,
+                product_type,
+                status,
+                problem_type,
+                hs_code,
+                delivery_service,
+                description,
+                number_of_print,
+                cod,
+                shipp_charges,
+                weight,
+                ship.other_fee,
+                ord.id as order_id,
+                order_code,
+                order_name,
+                amount,
+                ord.other_fee,
+                postal_code,
+                payment_method,
+                creation_time,
+                customer_id,
+                customer_first_name,
+                customer_phone_number,
+                customer_province,
+                customer_city,
+                customer_ward,
+                customer_street,
+                shop_id,
+                shop_first_name,
+                shop_street,
+                shop_phone_number
+            from [Shipping] as ship
+            join [Order] as ord on ord.id = ship.order_id
         ";
 
-
+        public static string GetOrderByUserId => @"
+                         select
+                            o.id,
+                            s.id,
+                            ship_code,
+                            ship_name,
+                            product_type,
+                            status,
+                            problem_type,
+                            hs_code,
+                            delivery_service,
+                            description,
+                            number_of_print,
+                            cod,
+                            shipp_charges,
+                            weight,
+                            s.other_fee,
+                            order_code,
+                            order_name,
+                            amount,
+                            o.other_fee,
+                            postal_code,
+                            payment_method,
+                            creation_time,
+                            customer_id,
+                            customer_first_name,
+                            customer_phone_number,
+                            customer_province,
+                            customer_city,
+                            customer_ward,
+                            customer_street,
+                            shop_id,
+                            shop_first_name,
+                            shop_street,
+                            shop_phone_number
+                         from [Order] as o
+                         join [Shipping] as s on o.id = s.order_id
+                         where customer_id = @Id
+                        ";
     }
 }

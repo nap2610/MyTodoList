@@ -18,7 +18,7 @@ namespace Todo.Data.Sales
             _context = context;
         }
 
-        public async Task<MessageStatus<long>> AddUser(Employee user)
+        public async Task<MessageStatus<long>> AddUser(User user)
         {
             var response = new MessageStatus<long>();
 
@@ -26,7 +26,7 @@ namespace Todo.Data.Sales
             {
                 using var connection = _context.CreateConnection();
 
-                var checkExist = connection.GetAsync<Employee>(user.user_id);
+                var checkExist = connection.GetAsync<User>(user.user_code);
 
                 if (checkExist.Equals(null))
                 {
@@ -49,7 +49,7 @@ namespace Todo.Data.Sales
             {
                 using var connection = _context.CreateConnection();
 
-                var checkExist = connection.GetAsync<Address>(address.address_id);
+                var checkExist = connection.GetAsync<Address>(address.address_code);
 
                 if (checkExist.Equals(null))
                 {
@@ -65,7 +65,7 @@ namespace Todo.Data.Sales
             }
             return response;
         }
-        public async Task<MessageStatus<long>> AddOrder(OrderBill order)
+        public async Task<MessageStatus<long>> AddOrder(Order order)
         {
             var response = new MessageStatus<long>();
 
@@ -84,7 +84,7 @@ namespace Todo.Data.Sales
             }
             return response;
         }
-        public async Task<MessageStatus<long>> AddTransport(TransportBill trans)
+        public async Task<MessageStatus<long>> AddTransport(Shipping trans)
         {
             var response = new MessageStatus<long>();
 
@@ -104,26 +104,84 @@ namespace Todo.Data.Sales
             return response;
         }
 
-        public async Task<MessageStatus<List<TransportBill>>> GetAllPackage()
+        public async Task<MessageStatus<List<Order>>> GetOrderByUserId(int id)
         {
-            var response = new MessageStatus<List<TransportBill>>();
+            var response = new MessageStatus<List<Order>>();
+            string sql = @"
+                         select
+                            o.id,
+                            order_code,
+                            order_name,
+                            amount,
+                            o.other_fee,
+                            postal_code,
+                            payment_method,
+                            creation_time,
+                            customer_id,
+                            customer_first_name,
+                            customer_phone_number,
+                            customer_province,
+                            customer_city,
+                            customer_ward,
+                            customer_street,
+                            shop_id,
+                            shop_first_name,
+                            shop_street,
+                            shop_phone_number,
+                            s.id,
+                            ship_code,
+                            ship_name,
+                            product_type,
+                            status,
+                            problem_type,
+                            hs_code,
+                            delivery_service,
+                            description,
+                            number_of_print,
+                            cod,
+                            shipp_charges,
+                            weight,
+                            s.other_fee
+                         from [Order] as o
+                         join [Shipping] as s on o.id = s.order_id
+                         where o.customer_id = '" + id + "'";
+            try
+            {
+                using var connection = _context.CreateConnection();
+                var result = await connection.QueryAsync<Order, Shipping, Order>(sql,
+                    (order, shipping) =>
+                    {
+                        order.Shipping = shipping;
+                        return order;
+                    }, splitOn: "id");
+
+                response.data = result.ToList();
+                response.success = true;
+            }
+            catch (Exception ex)
+            {
+                response.success = false;
+                response.message = ex.Message;
+            }
+            return response;
+        }
+
+        public async Task<MessageStatus<List<Shipping>>> GetAllPackage()
+        {
+            var response = new MessageStatus<List<Shipping>>();
 
             try
             {
                 using var connection = _context.CreateConnection();
 
-                var result = await connection.QueryAsync<TransportBill, OrderBill, Employee, Employee, Address, Address, TransportBill>
+                var result = await connection.QueryAsync<Shipping, Order, Shipping>
                     (Package.GetAllPackageInfo,
-                    (trans, order, emp1, emp2, adr1, adr2) =>
+                    (ship, order) =>
                     {
-                        trans.orders = order;
-                        order.customer = emp1;
-                        order.shop = emp2;
-                        emp1.addresses = adr1;
-                        emp2.addresses = adr2;
-                        return trans;
+                        ship.Order = order;
+                        return ship;
                     },
-                    splitOn: "order_id, user_auto_id, user_auto_id, address_auto_id, address_auto_id");
+                    splitOn: "order_id");
 
                 /*                var result = await connection.QueryAsync<TransportBill>(sql);
                                 Console.WriteLine("Result:  " + result);*/
@@ -147,17 +205,17 @@ namespace Todo.Data.Sales
             return response;
         }
 
-        public async Task<MessageStatus<long>> UploadExcel(UserDto customer, AddressDto address, OrderDto order, TransportDto trans)
+        public async Task<MessageStatus<string>> UploadExcel(UserDto customer, AddressDto address, OrderDto order, ShippingDto trans)
         {
-            var response = new MessageStatus<long>();
+            var response = new MessageStatus<string>();
 
-            var userSQL = "select user_auto_id from [Employee] where [user_id] = @Id";
+            var userSQL = "select id from [User] where [user_code] = @code";
 
             try
             {
                 using (var connection = _context.CreateConnection())
                 {
-                    var checkUserExist = await connection.QuerySingleOrDefaultAsync<Employee>(userSQL, new { Id = customer.user_id});
+                    var checkUserExist = await connection.QuerySingleOrDefaultAsync<User>(userSQL, new { code = customer.user_code});
 
                     connection.Open();
                     using (var transaction = connection.BeginTransaction())
@@ -171,20 +229,21 @@ namespace Todo.Data.Sales
                             await connection.InsertAsync(address, transaction);
 
                             order.customer_id = executeUser;
-                            await connection.InsertAsync(order, transaction);
+                            var executeOrder = await connection.InsertAsync(order, transaction);
 
+                            trans.order_id = executeOrder;
                             await connection.InsertAsync(trans, transaction);
                         }else
                         {
-                            order.customer_id = checkUserExist.user_auto_id;
-                            await connection.InsertAsync(order, transaction);
+                            order.customer_id = checkUserExist.id;
+                            var executeOrder = await connection.InsertAsync(order, transaction);
 
+                            trans.order_id = executeOrder;
                             await connection.InsertAsync(trans, transaction);
                         }
 
                         transaction.Commit();
                     }
-                    response.success = true;
                 };
             }catch (Exception ex)
             {
@@ -193,5 +252,7 @@ namespace Todo.Data.Sales
             }
             return response;
         }
+
+        
     }
 }

@@ -5,8 +5,9 @@ using Todo.Domain.Sales;
 
 namespace Todo.Data.Sales
 {
-    public interface IHRManagement_Repository : IRepository<MessageStatus<Employee>>
+    public interface IHRManagement_Repository : IRepository<MessageStatus<User>>
     {
-        Task<MessageStatus<List<Employee>>> GetByRole(int roleID);
+        Task<MessageStatus<List<User>>> GetByRole(int roleID);
+        Task<MessageStatus<List<User>>> GetAllCustomer();
     }
 }

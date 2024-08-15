@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -10,7 +11,11 @@
     @* Bootstrap & jQuery: *@
     <link href="https://kendo.cdn.telerik.com/themes/8.2.1/default/default-ocean-blue.css" rel="stylesheet" type="text/css" />
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    
+
+    @* Gritter Notify: *@
+    <link href="https://www.jqueryscript.net/demo/Classic-Growl-like-Notification-Plugin-For-jQuery-Gritter/css/jquery.gritter.css" rel="stylesheet" />
+    <script src="https://www.jqueryscript.net/demo/Classic-Growl-like-Notification-Plugin-For-jQuery-Gritter/js/jquery.gritter.js"></script>
+
     @* Add the Kendo UI scripts: *@
     <script src="https://unpkg.com/jszip/dist/jszip.min.js"></script>
     <script src="https://kendo.cdn.telerik.com/2024.3.806/js/kendo.all.min.js"></script>
@@ -23,63 +28,244 @@
             caret-color: transparent;
         }
 
-        .nav-bar{
-            margin-top: 15px;
-            width 100%;
-            display: flex;
-            justify-content: space-around;
+        #k-license-banner{
+            display: none !important;
         }
 
-        .nav-bar div{
-            display: flex;
-            align-items: baseline;
+        .text-ellipsis, .k-grid-footer td {
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
         }
 
-        .nav-bar div span {
-            font-size: 20px;
-            margin-right: 15px;
+        .k-table-td, .k-column-title {
+            font-size: 12px;
         }
 
-        .nav-bar div ul li{
-            list-style-type: none;  
-            display: inline;
-            margin-right: 10px;
+        a {
+            color: #0bacd3;
+            text-decoration: none;
         }
 
+        #gritter-notice-wrapper {
+            position: fixed;
+            top: 40px;
+            right: 50%;
+            transform: translateX(50%);
+            width: 500px;
+            z-index: 9999;
+        }
+
+            #gritter-notice-wrapper.top-left {
+                left: 20px;
+                right: auto;
+            }
+
+            #gritter-notice-wrapper.bottom-right {
+                top: auto;
+                left: auto;
+                bottom: 20px;
+                right: 20px;
+            }
+
+            #gritter-notice-wrapper.bottom-left {
+                top: auto;
+                right: auto;
+                bottom: 20px;
+                left: 20px;
+            }
+
+        .gritter-item-wrapper {
+            position: relative;
+            margin: 0 0 10px 0;
+        }
+
+        .gritter-item {
+            display: block;
+            color: #eee;
+            padding: 2px 11px 8px 11px;
+            font-size: 11px;
+            font-family: verdana;
+        }
+
+        .hover .gritter-item {
+            background-position: right -40px;
+        }
+
+        .gritter-item p {
+            padding: 0;
+            margin: 0;
+            word-wrap: break-word;
+        }
+
+        .gritter-title {
+            font-size: 14px;
+            font-weight: bold;
+            padding: 0 0 7px 0;
+            display: block;
+        }
+
+        .gritter-close {
+            left: unset;
+            right: 0px;
+        }
+
+        .gritter-with-image,
+        .gritter-without-image {
+            padding: 0;
+        }
+        /* for the light (white) version of the gritter notice */
+        .gritter-light .gritter-item,
+        .gritter-light .gritter-bottom,
+        .gritter-light .gritter-top,
+        .gritter-light .gritter-close {
+            color: #222;
+        }
+
+        .gritter-light .gritter-title {
+            text-shadow: none;
+        }
+
+        #gritter-notice-wrapper .gritter-item-wrapper {
+            position: relative;
+            margin: 0 0 10px 0;
+        }
+
+            #gritter-notice-wrapper .gritter-item-wrapper .gritter-item {
+                display: block;
+                background: #657791;
+                border: 1px solid #455264;
+                color: #ffffff;
+                padding: 10px 11px;
+                font-size: 12px;
+                border-radius: 3px;
+                transition: all;
+                transition: all all ease-out;
+                transition-duration: 0.4s;
+            }
+
+                #gritter-notice-wrapper .gritter-item-wrapper .gritter-item:hover {
+                    background: #72849e;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper .gritter-item p {
+                    padding: 0;
+                    margin: 0;
+                    word-wrap: break-word;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper .gritter-item .gritter-close i {
+                    font-size: 16px;
+                    color: #ffffff;
+                    transition: background;
+                    transition: all background ease-out;
+                    transition-duration: 0.4s;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper .gritter-item .gritter-close:hover i {
+                    color: #f7f7f7;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper .gritter-item .gritter-image {
+                    width: 48px;
+                    height: 48px;
+                    float: left;
+                    border-radius: 3px;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper .gritter-item .gritter-icon {
+                    margin-top: 0;
+                    margin-right: 15px;
+                    float: left;
+                    font-size: 32px;
+                    padding-bottom: 10px;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper .gritter-item .gritter-without-image {
+                    padding: 0;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper .gritter-item .gritter-title {
+                    font-size: 14px;
+                    font-weight: bold;
+                    padding: 0;
+                    display: block;
+                }
+
+            #gritter-notice-wrapper .gritter-item-wrapper.success-notice .gritter-item {
+                color: #0a776c;
+                background: #b2ede8;
+                border: 1px solid #63c8be;
+            }
+
+                #gritter-notice-wrapper .gritter-item-wrapper.success-notice .gritter-item:hover {
+                    background: #c7f2ee;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper.success-notice .gritter-item .gritter-close i {
+                    color: #0a776c;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper.success-notice .gritter-item .gritter-close:hover i {
+                    color: #09695f;
+                }
+
+            #gritter-notice-wrapper .gritter-item-wrapper.info-notice .gritter-item {
+                color: #2a6891;
+                background: #cfebff;
+                border: 1px solid #94bedb;
+            }
+
+                #gritter-notice-wrapper .gritter-item-wrapper.info-notice .gritter-item:hover {
+                    background: #e9f6ff;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper.info-notice .gritter-item .gritter-close i {
+                    color: #2a6891;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper.info-notice .gritter-item .gritter-close:hover i {
+                    color: #275f85;
+                }
+
+            #gritter-notice-wrapper .gritter-item-wrapper.error-notice .gritter-item {
+                color: #933230;
+                background: #fddede;
+                border: 1px solid #cb7c7a;
+            }
+
+                #gritter-notice-wrapper .gritter-item-wrapper.error-notice .gritter-item:hover {
+                    background: #fef6f6;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper.error-notice .gritter-item .gritter-close i {
+                    color: #933230;
+                }
+
+                #gritter-notice-wrapper .gritter-item-wrapper.error-notice .gritter-item .gritter-close:hover i {
+                    color: #872e2c;
+                }
+
+        .gritter-top, .gritter-bottom {
+            background: #cfebff;
+            opacity: .5;
+            height: 5px;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
-    <div class="nav-bar">
-        <div>
-            <span> HR </span>
-            <ul>
-                <li>
-                    <a href="#">Admin</a>
-                </li>
-                <li>
-                    <a href="#">Staff</a>
-                </li>
-                <li>
-                    <a href="#">Shop</a>
-                </li>
-                <li>
-                    <a asp-action="Customer" asp-controller="HR">Customer</a>
-                </li>
-            </ul>
-        </div>
 
-        <div>
-            <span> Package </span>
-            <ul>
-                <li>
-                    <a asp-action="Index" asp-controller="Package">Transport</a>
-                </li>
-                <li>
-                    <a href="#">Order</a>
-                </li>
-            </ul>
-        </div>
-   </div>
+    @{
+         @*
+        var role = HttpContextAccessor.HttpContext.Session.GetInt32("Role");
+        if (role != null)
+        {
+            await Html.RenderPartialAsync("_NavbarPartial");
+        }
+        *@
+        await Html.RenderPartialAsync("_NavbarPartial");
+    }
 
     <div class="container">
         <main role="main" class="pb-3">
