@@ -124,7 +124,7 @@ Html.Kendo().Grid<Shipping>()
             })
             .Aggregates(aggregates =>
             {
-                aggregates.Add(e => e.cod).Sum().Min().Max();
+                aggregates.Add(e => e.cod).Sum().Min().Max().Average();
             })
         //.Group( groups => groups.Add(p => p.Order.customer_id))
         )

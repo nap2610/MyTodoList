@@ -15,7 +15,6 @@ namespace WebManagement.Controllers
             SHOP = 3,
             CUSTOMER = 4,
         }
-
         enum Active
         {
             DISABLE = 0,

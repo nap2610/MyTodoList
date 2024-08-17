@@ -16,19 +16,12 @@
     .Name("grid")
     .Columns(columns =>
     {
-        columns.Bound(e => e.name).Title("Name");
-        columns.Bound(e => e.phone_number).Title("Phone");
-        columns.Bound(e => e.address).Title("Address");
-        columns.Bound(e => e.postal_code).Title("Postal");
-        columns.Bound(e => e.amount).Title("Amount");
+        columns.Bound(e => e.name).Title("Name").Filterable(ftb => ftb.Cell(cell => cell.Operator("contains").SuggestionOperator(FilterType.Contains)));
+        columns.Bound(e => e.phone_number).Title("Phone").Filterable(ftb => ftb.Cell(cell => cell.Operator("eq")));
+        columns.Bound(e => e.address).Title("Address").Filterable(ftb => ftb.Cell(cell => cell.Operator("contains").SuggestionOperator(FilterType.Contains)));
+        columns.Bound(e => e.postal_code).Title("Postal").Filterable(ftb => ftb.Cell(cell => cell.Operator("eq")));
+        columns.Bound(e => e.amount).Title("Amount").Format("{0:N0} ₫").Filterable(ftb => ftb.Cell(cell => cell.Operator("eq")));
         columns.Bound(e => e.count_order).Title("Order");
-        //columns.Bound(e => e.Order).Title("Order").ClientTemplate("#=showOrderCount(data.Order)#");
-        //columns.Bound(e => e.Order).Title("Amount").ClientTemplate("#=showOrderAmoutSum(data.Order)#");
-
-@*         columns.Bound(e => e.Address!.street).Title("Address").Width("400").ClientTemplate("<div class='text-ellipsis'>#= Address.street #</div>");
-        columns.Bound(e => e.Address!.postal_code).Title("Postal Code"); *@
-@*         columns.Bound(e => e.Order).Title("Count").ClientTemplate("<span id='countOrder'></span>");
-        columns.Bound(e => e.Order).Title("Total").ClientTemplate("<span id='sumAmountOrder'></span>"); *@
     })
     .DataSource(dataSource => dataSource
         .Ajax()
@@ -40,7 +33,7 @@
             })
     )
     .ClientDetailTemplateId("template")
-    .Filterable()
+    .Filterable(ftb => ftb.Mode(GridFilterMode.Row))
     .Sortable()
     .Scrollable()
     .Pageable()
@@ -65,7 +58,7 @@
                     columns.Bound(o => o.creation_time).Title("Time").ClientTemplate("\\#= kendo.toString(kendo.parseDate(creation_time), 'h:MM dd-MM-yyyy') \\#");
                     columns.Bound(o => o.shop_first_name).Title("Shop");
                     columns.Bound(o => o.Shipping.status).Title("Status");
-                    columns.Bound(o => o.Shipping.problem_type).Title("Problem");
+                    columns.Bound(o => o.Shipping.problem_type).Title("Problem").ClientTemplate("\\#= Shipping.problem_type \\#");
                     })
                     .DataSource(dataSource => dataSource
                         .Ajax()
@@ -85,6 +78,8 @@
         }).ToClientTemplate()
     )
 </script>
+
+
 
 
 
