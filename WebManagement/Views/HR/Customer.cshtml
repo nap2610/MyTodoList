@@ -12,13 +12,16 @@
     </div>
 </div>
 
-@(Html.Kendo().Grid<User>()
+@(Html.Kendo().Grid<UserViewModel>()
     .Name("grid")
     .Columns(columns =>
     {
-        columns.Bound(e => e.id).Title("Id");
-        columns.Bound(e => e.first_name).Title("Name");
+        columns.Bound(e => e.name).Title("Name");
         columns.Bound(e => e.phone_number).Title("Phone");
+        columns.Bound(e => e.address).Title("Address");
+        columns.Bound(e => e.postal_code).Title("Postal");
+        columns.Bound(e => e.amount).Title("Amount");
+        columns.Bound(e => e.count_order).Title("Order");
         //columns.Bound(e => e.Order).Title("Order").ClientTemplate("#=showOrderCount(data.Order)#");
         //columns.Bound(e => e.Order).Title("Amount").ClientTemplate("#=showOrderAmoutSum(data.Order)#");
 
@@ -33,7 +36,7 @@
         .Read(read => read.Action("Customers_Read", "HR"))
         .Model(model =>
             {
-                model.Id(field => field.id);
+                model.Id(field => field.user_id);
             })
     )
     .ClientDetailTemplateId("template")
