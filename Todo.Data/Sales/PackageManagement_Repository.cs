@@ -180,6 +180,7 @@ namespace Todo.Data.Sales
             {
                 using var connection = _context.CreateConnection();
                 // QUERY BẰNG PROCEDURE (Trả về kiểu kết hợp Shipping và Order)
+                // CÂU QUERY ĐỂ TRONG QUERIES/SALES/Package
                 var result = await connection.QueryAsync<ShippingViewModel>(Package.GetAllPackageInfo, commandType: CommandType.StoredProcedure);
 
                 // CHECK RESULT CÓ DỮ LIỆU HAY KHÔNG
