@@ -1,12 +1,15 @@
 ﻿using Dapper;
 using Dapper.Contrib.Extensions;
+using System.Data;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Transactions;
 using Todo.Data.Infrastructure;
 using Todo.Data.Queries.Sales;
 using Todo.Data.SalesDto;
 using Todo.Domain.BaseResponse;
 using Todo.Domain.Sales;
+using Todo.Domain.ViewModels;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Todo.Data.Sales
@@ -166,26 +169,20 @@ namespace Todo.Data.Sales
             return response;
         }
 
-        public async Task<MessageStatus<List<Shipping>>> GetAllPackage()
-        {
-            var response = new MessageStatus<List<Shipping>>();
 
+
+        // ĐỌC CODE Ở FUNCTION NÀY -------------------
+        public async Task<MessageStatus<List<ShippingViewModel>>> GetAllPackage()
+        {
+            // TẠO ĐỐI TƯỢNG TRẢ VỀ
+            var response = new MessageStatus<List<ShippingViewModel>>();
             try
             {
                 using var connection = _context.CreateConnection();
+                // QUERY BẰNG PROCEDURE (Trả về kiểu kết hợp Shipping và Order)
+                var result = await connection.QueryAsync<ShippingViewModel>(Package.GetAllPackageInfo, commandType: CommandType.StoredProcedure);
 
-                var result = await connection.QueryAsync<Shipping, Order, Shipping>
-                    (Package.GetAllPackageInfo,
-                    (ship, order) =>
-                    {
-                        ship.Order = order;
-                        return ship;
-                    },
-                    splitOn: "order_id");
-
-                /*                var result = await connection.QueryAsync<TransportBill>(sql);
-                                Console.WriteLine("Result:  " + result);*/
-
+                // CHECK RESULT CÓ DỮ LIỆU HAY KHÔNG
                 if (!result.Any())
                 {
                     response.success = false;
@@ -194,16 +191,20 @@ namespace Todo.Data.Sales
                 else
                 {
                     response.success = true;
+                    // GÁN DỮ LIỆU VÀO ĐỐI TƯỢNG TRẢ VỀ
                     response.data = result.ToList();
                 }
 
             } catch (Exception ex) {
-                //set success true khi có exception
+                // SET SUCCESS = FALSE VÀ MESSAGE KHI CÓ LỖI
                 response.success = false;
                 response.message = ex.Message;
             }
             return response;
         }
+        // ĐỌC CODE Ở FUNCTION NÀY -------------------
+
+
 
         public async Task<MessageStatus<string>> UploadExcel(UserDto customer, AddressDto address, OrderDto order, ShippingDto trans)
         {
@@ -253,6 +254,23 @@ namespace Todo.Data.Sales
             return response;
         }
 
-        
+        public async Task<MessageStatus<AggregateViewModel>> GetAggregatePackage()
+        {
+            var response = new MessageStatus<AggregateViewModel>();
+            string procName = "SelectAggregateCod";
+            try
+            {
+                using var connection = _context.CreateConnection();
+                var result = await connection.QueryFirstOrDefaultAsync<AggregateViewModel>(procName, commandType: CommandType.StoredProcedure);
+                response.success = true;
+                response.data = result;
+            }
+            catch (Exception ex)
+            {
+                response.success = false;
+                response.message = ex.Message;
+            }
+            return response;
+        }
     }
 }

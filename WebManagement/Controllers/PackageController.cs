@@ -1,13 +1,11 @@
 ﻿using Kendo.Mvc.Extensions;
 using Kendo.Mvc.UI;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
 using Todo.Data.Sales;
-using Todo.Domain.Sales;
 using OfficeOpenXml;
 using Todo.Data.SalesDto;
 using System.Text;
+using Todo.Domain.ViewModels;
 
 namespace WebManagement.Controllers
 {
@@ -25,23 +23,30 @@ namespace WebManagement.Controllers
         public PackageController(IPackageManagement_Repository packageRepository) {
             _packageRepository = packageRepository;
         }
-
-        public IActionResult Index()
-        {   
-         return View();
-        }
-
         public IActionResult Order()
         {
             return View();
         }
 
-        public async Task<ActionResult> TransportWithOrder_Read([DataSourceRequest] DataSourceRequest dsrequest)
-        {
 
+
+
+        // BẮT ĐẦU ĐỌC TỪ ĐÂY (ACTION INDEX) -------------------------------
+        public async Task<IActionResult> Index()
+        {
+            // LẤY DỮ LIỆU SUM(), AVERAGE(), MAX() COD TỪ REPO
+            var aggr = await _packageRepository.GetAggregatePackage();
+            // BINDING BẰNG VIEWDATA
+            ViewData["Aggr"] = aggr.data;
+
+            return View(); // VIEWS/PACKAGE/INDEX
+        }
+        // ĐƯỢC GỌI TỪ VIEW INDEX ĐỂ LẤY DỮ LIỆU + CHỨC NĂNG FILTER
+        public async Task<ActionResult> TransportWithOrder_Read([DataSourceRequest] DataSourceRequest dsrequest, string customerName, string cod)
+        {
             var transportPack = await _packageRepository.GetAllPackage();
 
-            // Check If Not Success -> return Error
+            // CHECK SUCCESS TRUE HAY FALSE
             if (!transportPack.success)
             {
                 return Json(new DataSourceResult
@@ -49,9 +54,34 @@ namespace WebManagement.Controllers
                     Errors = new[] { transportPack.message },
                 });
             }
-            
-            return new JsonResult(transportPack.data.ToDataSourceResult(dsrequest));
+
+            // TẠO ĐỐI TƯỢNG TRẢ VỀ
+            IEnumerable<ShippingViewModel> result = transportPack.data;
+
+            // CHECk CUSTOMER NAME CÓ CẦN FILTER KHÔNG
+            if (!string.IsNullOrEmpty(customerName))
+            {
+                // SET DEFAULT PAGE BẰNG 1 SAU KHI FILTER
+                dsrequest.Page = 1;
+                result = result.Where(o => o.customer_first_name.Contains(customerName));
+            }
+
+            // CHECk COD CÓ CẦN FILTER KHÔNG
+            if (!string.IsNullOrEmpty(cod)) 
+            {
+                dsrequest.Page = 1;
+                result = result.Where(o => o.cod.Equals( float.Parse(cod) ));
+            }
+
+            // TRẢ VỀ
+            return new JsonResult(result.ToDataSourceResult(dsrequest));
         }
+        // (ACTION INDEX) -------------------------------
+
+
+
+
+
 
         public async Task<ActionResult> OrdersByUserId_Read(int id, [DataSourceRequest] DataSourceRequest dsrequest)
         {

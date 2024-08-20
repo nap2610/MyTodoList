@@ -3,6 +3,8 @@ using Kendo.Mvc.UI;
 using Microsoft.AspNetCore.Mvc;
 using Todo.Data.Sales;
 using Todo.Domain.Sales;
+using Todo.Domain.ViewModels;
+using static Slapper.AutoMapper;
 
 namespace WebManagement.Controllers
 {
@@ -48,8 +50,13 @@ namespace WebManagement.Controllers
             return View("Index");
         }
 
-        public IActionResult Customer()
+
+        public IActionResult Customer(int id)
         {
+            if (id > 0)
+            {
+                ViewBag.Id = id;
+            }
             return View();
         }
 
@@ -58,9 +65,8 @@ namespace WebManagement.Controllers
             return View();
         }
 
-        public async Task<ActionResult> Customers_Read([DataSourceRequest] DataSourceRequest dsrequest)
+        public async Task<ActionResult> Customers_Read([DataSourceRequest] DataSourceRequest dsrequest, string id)
         {
-
             var customers = await _hrRepository.GetAllCustomer();
 
             // Check If Not Success -> return Error
@@ -72,7 +78,14 @@ namespace WebManagement.Controllers
                 });
             }
 
-            return new JsonResult(customers.data.ToDataSourceResult(dsrequest));
+            IEnumerable<UserViewModel> result = customers.data;
+
+            if (!string.IsNullOrEmpty(id))
+            {
+                result = result.Where(p => p.user_id.Equals( int.Parse(id) ));
+            }
+
+            return new JsonResult(result.ToDataSourceResult(dsrequest));
         }
 
         public async Task<ActionResult> Staffs_Read([DataSourceRequest] DataSourceRequest dsrequest)

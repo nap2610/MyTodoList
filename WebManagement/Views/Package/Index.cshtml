@@ -1,6 +1,7 @@
-﻿@* @model IEnumerable<Todo.Domain.Sales.TransportBill>
- *@
+﻿@model IEnumerable<ShippingViewModel>
+
 @{
+    var aggr = ViewData["Aggr"] as AggregateViewModel;
 }
 
 @if(TempData["Msg"] != null){
@@ -41,33 +42,72 @@
 <div class="row mt-3 mb-3">
     <div class="col-sm-9">
 
-        <div class="mb-1">
-            <div style="display:inline-block;min-width:70px">
-                <span class="badge bg-success bg-gradient text-white">Average</span>
+        <div style ="display:flex" class="mb-3">
+            <div class="me-3">
+                <span class="normalText">Average:</span>
+                <div style="display:inline-block">
+                    <span class="badge bg-primary bg-gradient text-white badgeText" id="avgCod"></span>
+                </div>
             </div>
-            <span class="avggText" id="avgCod"></span>
+
+            <div class="me-3">
+                <span class="normalText">Sum:</span>
+                <div style="display:inline-block">
+                    <span class="badge bg-primary bg-gradient text-white badgeText" id="sumCod"></span>
+                </div>
+            </div>
+
+            <div class="me-3">
+                <span class="normalText">Max:</span>
+                <div style="display:inline-block">
+                    <span class="badge bg-primary bg-gradient text-white badgeText" id="maxCod"></span>
+                </div>
+            </div>
         </div>
 
-        <div class="mb-1">
-            <div style="display:inline-block;min-width:70px">
-                <span class="badge bg-danger bg-gradient text-white">Sum</span>
+        <form style="display:flex; align-items:center;">
+            <label class="normalText me-1" for="customerName">Customer</label>
+            <div style="width:150px">
+                @(Html.Kendo().TextBox()
+                    .Name("customerName")
+                    .Size(ComponentSize.Small)
+                    .Rounded(Rounded.Small)
+                    .FillMode(FillMode.Solid)
+                    .HtmlAttributes(new { style = "width: 100%" })
+                    )
+                @* <input class="form-control form-control-sm" onkeypress="handle(event)" type="text" id="customerName" name="customerName"> *@
             </div>
-            <span class="avggText" id="sumCod"></span>
-        </div>
-
-        <div class="mb-1">
-            <div class="me-3" style="display:inline-block;min-width:100px;">
-                <span class="badge bg-secondary bg-gradient text-white">Min</span>
-                -
-                <span class="badge bg-primary bg-gradient text-white">Max</span>
+            <span class="me-3"></span>
+            <label class="normalText me-1" for="cod">COD</label>
+            <div style="width:150px">
+                @(Html.Kendo().TextBox()
+                    .Name("cod")
+                    .Size(ComponentSize.Small)
+                    .Rounded(Rounded.Small)
+                    .FillMode(FillMode.Solid)
+                    .HtmlAttributes(new { style = "width: 100%" })
+                    .SuffixOptions(suffix => suffix.Template("<span style='font-weight:500;padding-inline:5px'>₫</span>"))
+                    )
+               @*  <input class="form-control form-control-sm" onkeypress="handle(event)" type="text" id="cod" name="cod"> *@
             </div>
-            
-            <div style="display:inline-block">
-                <span class="avggText" id="minCod"></span>
-                -
-                <span class="avggText" id="maxCod"></span>
-            </div>
-        </div>
+            <span class="me-3"></span>
+            @(Html.Kendo().Button()
+                .Name("filterBtn")
+                .Content("Filter")
+                .Size(ComponentSize.Small)
+                .ThemeColor(ThemeColor.Primary)
+                .Events(ev => ev.Click("applyFilter"))
+                )
+            <span class="me-1"></span>
+            @(Html.Kendo().Button()
+                .Name("kendoIconTextButton")
+                .Content("Clear")
+                .Size(ComponentSize.Small)
+                //.HtmlAttributes(new { type = "button" })
+                .Events(ev => ev.Click("clearFilter"))
+                .Icon("filter-clear")
+                )
+        </form>
 
     </div>
 
@@ -76,6 +116,7 @@
         <form class="mt-1 mb-4" asp-action="Upload" asp-controller="Package" enctype="multipart/form-data" method="post">
             <div class="input-group input-group-sm">
                 <input type="file" name="file" class="form-control">
+
                 <button type="submit" class="btn btn-primary">Upload</button>
             </div>
         </form>
@@ -83,12 +124,12 @@
 </div>
 
 @(
-Html.Kendo().Grid<Shipping>()
+Html.Kendo().Grid<ShippingViewModel>()
         .Name("grid")
         //.Sortable()
         //.Filterable()
-        .Groupable()
-        .Scrollable()  
+        //.Groupable()
+        .Scrollable()
         .Pageable(pager => pager
             .Refresh(true)
             .PageSizes(new[] { 5, 10, 15, 20, 30, 50 })
@@ -98,93 +139,117 @@ Html.Kendo().Grid<Shipping>()
         {
             e.DataBound("onDataBound");
         })
-        @* .Selectable(selectable => selectable
-        .Mode(GridSelectionMode.Multiple)
-            .CellAggregates(true)
-        )
-        .StatusBarTemplate(Html.Kendo().Template()
-            .AddHtml(@"${data.aggregates.count>0?`<div>Cells count: ${data.aggregates['count']} Min: ${data.aggregates['min']} 
-                Max: ${data.aggregates['max']} Sum: ${data.aggregates['sum']} Average: ${formatAggregate(data.aggregates['average'], 'average')} 
-                Earliest Date: ${formatAggregate(data.aggregates['earliest'], 'earliest')} 
-                Latest Date: ${formatAggregate(data.aggregates['latest'], 'latest')}</div>`:'No rows are selected'}
-            ")
-        )
-        .Navigatable() *@
         .DataSource(dataSource => dataSource
             .Ajax()
-            .Read(read => read.Action("TransportWithOrder_Read", "Package"))
-            .Events(events => events.Error("onError"))
+            .Read(read => read.Action("TransportWithOrder_Read", "Package").Data("additionalData"))
             .PageSize(10)
-            .ServerOperation(false)
-            .Model( model =>
+            .ServerOperation(true)
+            .Events(events => events.Error("onError"))
+            .Model(model =>
             {
-                model.Id(field => field.id);
+                model.Id(field => field.ship_id);
                 model.Field(field => field.ship_code).Editable(false);
-                model.Field(field => field.Order.order_code).Editable(false);
+                model.Field(field => field.order_code).Editable(false);
             })
-            .Aggregates(aggregates =>
-            {
-                aggregates.Add(e => e.cod).Sum().Min().Max().Average();
-            })
-        //.Group( groups => groups.Add(p => p.Order.customer_id))
         )
         .Columns(columns =>
         {
             columns.Select().Width(50)
-                .ClientHeaderTemplate(@"<input tabindex='-1' id='header-check-all' class='k-select-checkbox 
-                    k-checkbox k-checkbox-md k-rounded-md' data-role='checkbox' aria-label='Select all rows' type='checkbox'/>")
-                .ClientFooterTemplate(@"<input tabindex='-1' id='footer-check-all' class='k-select-checkbox 
-                    k-checkbox k-checkbox-md k-rounded-md' data-role='checkbox' aria-label='Select all rows' type='checkbox'/>");
+                .ClientHeaderTemplate(@"<input tabindex='-1' id='header-check-all' class='k-select-checkbox
+                        k-checkbox k-checkbox-md k-rounded-md' data-role='checkbox' aria-label='Select all rows' type='checkbox'/>")
+                .ClientFooterTemplate(@"<input tabindex='-1' id='footer-check-all' class='k-select-checkbox
+                        k-checkbox k-checkbox-md k-rounded-md' data-role='checkbox' aria-label='Select all rows' type='checkbox'/>");
             columns.Bound(ts => ts.ship_code).Title("Ship Code").Hidden();
             columns.Bound(ts => ts.ship_name).Title("Products Name").Width("150").ClientTemplate("<div class='text-ellipsis'>#= ship_name #</div>");
-            //columns.Bound(ts => ts.shipping_charges).Title("Charges").Format("{0:N0}₫");
-            columns.Bound(ts => ts.cod).Title("COD").Format("{0:N0} ₫")
+            columns.Bound(ts => ts.cod).Title("COD").Format("{0:N0} ₫").HtmlAttributes(new {@class = "hoverCod" })
                 .ClientFooterTemplate("<span id='footerSumCod'></span>");
-            //columns.Bound(ts => ts.other_fee).Title("Other Fee").Format("{0:N0}₫");
-            //columns.Bound(ts => ts.weight).Title("Weight");
-            columns.Bound(ts => ts.problem_type).Title("Problem").Width("150").ClientTemplate("<div class='text-ellipsis'>#= problem_type #</div>")
-                .ClientFooterTemplate("<span id='footerCountProblem'></span>");
+            columns.Bound(ts => ts.problem_type).Title("Problem").Width("150").HtmlAttributes(new { style = "color:red;" }).ClientTemplate("<div class='text-ellipsis'>#= problem_type #</div>")
+                .ClientFooterTemplate("<span id='footerCountProblem'></span>"); 
             columns.Bound(ts => ts.status).Title("Status");
             columns.Bound(ts => ts.delivery_service).Title("Service");
-            //columns.Bound(ts => ts.Order.payment_method).Title("Payment Method");
             columns.Bound(ts => ts.description).Title("Description").Width("150").ClientTemplate("<div class='text-ellipsis'>#= description #</div>");
-            columns.Bound(ts => ts.Order.order_code).Title("Ord Code").Hidden();
-            columns.Bound(ts => ts.Order.creation_time).Title("Cre Time").ClientTemplate("#= kendo.toString(kendo.parseDate(Order.creation_time), 'h:MM dd-MM-yyyy') #");
-            //columns.Bound(ts => ts.Order.customer_id).Title("CusId");
-            columns.Bound(ts => ts.Order.customer_first_name).Title("Customer");
-            //columns.Bound(ts => ts.Order.customer_phone_number).Title("Phone");
-            //columns.Bound(ts => ts.orders.customer.addresses.province).Title("Address");
-            columns.Bound(ts => ts.Order.shop_first_name).Title("Shop");
-            //columns.Bound(ts => ts.orders.shop.phone).Title("Phone");
-            //columns.Bound(ts => ts.orders.shop.addresses.ward).Title("From");
+            columns.Bound(ts => ts.order_code).Title("Ord Code").Hidden();
+            columns.Bound(ts => ts.creation_time).Title("Cre Time").HtmlAttributes(new { style = "color:blue;" }).ClientTemplate("#= kendo.toString(kendo.parseDate(creation_time), 'h:MM dd-MM-yyyy') #");
+            columns.Bound(ts => ts.customer_first_name).Title("Customer").ClientTemplate("<a href='/HR/Customer/#=customer_id#'>#= customer_first_name #</a>");
+            columns.Bound(ts => ts.shop_first_name).Title("Shop");
         })
         .PersistSelection()
         .Resizable(resize => resize.Columns(true))
+        .HtmlAttributes(new { style = "height: 510px" })
 )
 
+@* Avvgregate for row click
+    .Selectable(selectable => selectable
+        .Mode(GridSelectionMode.Multiple)
+            .CellAggregates(true)
+        )
+        .StatusBarTemplate(Html.Kendo().Template()
+            .AddHtml(@"${data.aggregates.count>0?`<div>Cells count: ${data.aggregates['count']} Min: ${data.aggregates['min']}
+                Max: ${data.aggregates['max']} Sum: ${data.aggregates['sum']} Average: ${formatAggregate(data.aggregates['average'], 'average')}
+                Earliest Date: ${formatAggregate(data.aggregates['earliest'], 'earliest')}
+                Latest Date: ${formatAggregate(data.aggregates['latest'], 'latest')}</div>`:'No rows are selected'}
+            ")
+        )
+        .Navigatable() *@
+
 <script>
+    var cod = document.getElementById("cod");
+    var customerName = document.getElementById("customerName");
+
+    cod.addEventListener("beforeinput", function (e) {
+        const nextVal =
+            e.target.value.substring(0, e.target.selectionStart) +
+            (e.data ?? '') +
+            e.target.value.substring(e.target.selectionEnd)
+            ;
+        if (!/^(\d+)$/.test(nextVal)) {
+            e.preventDefault();
+        }
+        return;
+    });
+
+    cod.addEventListener("keypress", function(e) {
+        handle(e);
+    });
+
+    customerName.addEventListener("keypress", function (e) {
+        handle(e);
+    });
+
+    function handle(e) {
+        if (e.keyCode === 13) {
+            e.preventDefault(); // Ensure it is only this code that runs
+            applyFilter();
+        }
+    }
+
+    function applyFilter() {
+        var grid = $("#grid").data("kendoGrid");
+        grid.dataSource.read();
+    }
+
+    function clearFilter() {
+        $("#customerName").val("");
+        $("#cod").val("");
+    }
+
+    function additionalData() {
+        return {
+            customerName: $("#customerName").val(),
+            cod: $("#cod").val(),
+        };
+    }
 
     function onDataBound(e) {
 
         var grid = e.sender;
         var data = grid.dataSource.view(); // Get current page data
 
-        $(".k-grouping-row").each(function (e) {
-            grid.collapseGroup(this);
-        });
-
-        // --Average CACULATE
-        
-        var avgCod = grid.dataSource.aggregates().cod.average;
-        var sumCod = grid.dataSource.aggregates().cod.sum;
-        var minCod = grid.dataSource.aggregates().cod.min;
-        var maxCod = grid.dataSource.aggregates().cod.max;
-
-        $("#avgCod").text(formatVND(avgCod));
-        $("#sumCod").text(formatVND(sumCod));
-        $("#minCod").text(formatVND(minCod));
-        $("#maxCod").text(formatVND(maxCod));
-        
+        // AVG, SUM, MIN, MAX :COD
+        document.getElementById('sumCod').innerText = formatVND('@aggr.sumElement');
+        document.getElementById('avgCod').innerText = formatVND('@aggr.averageElement');
+        document.getElementById('maxCod').innerText = formatVND('@aggr.maxElement');
+       
         // --FOOTER CACULATE
         let totalCod = 0;
         let totalProblem = 0;
@@ -195,16 +260,10 @@ Html.Kendo().Grid<Shipping>()
                 totalProblem++;
             }
         }
-
-        let footerCodSum = kendo.template($("#footer-cod-sum").html());
-        let footerProblemCount = kendo.template($("#footer-problem-count").html());
         
         $('#footerSumCod').text(formatVND(totalCod));
         $('#footerCountProblem').text(totalProblem);
-        //grid.footer.find("td").eq(3).html(footerCodSum({ sum: formatVND(totalCod) }));
-        //grid.footer.find("td").eq(4).html(footerProblemCount({ count: totalProblem }));
         
-
         // --CHECKBOX ROW
         $(grid.element).find("input#footer-check-all").on("change", function (e) {
             if ($(this).is(':checked')) { // If the checkbox is checked
@@ -260,15 +319,26 @@ Html.Kendo().Grid<Shipping>()
     }
 </script>
 
-<script id="footer-cod-sum" type="text/x-kendo-template">Sum: #=sum#</script>
-<script id="footer-problem-count" type="text/x-kendo-template">Count: #=count# problem</script>
-
 <style> 
-    .avggText{
-        font-size: 12px;
+    .normalText {
+        font-size: 13px;
+    }
+
+    .badgeText {
+        font-size: 11px;
         font-weight: 500;
     }
 
-    
+    .k-grid tbody > tr td {
+        border-bottom: 1px solid #dddddd !important;
+    }
 
+    .hoverCod{
+        background: #caffca;
+        color: black;
+    }
+
+    tr:hover .hoverCod{
+        background: #b9f8b9;
+    }
 </style>

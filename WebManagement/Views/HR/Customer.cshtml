@@ -1,40 +1,31 @@
 ﻿
-<div class="mb-3">
-    <div>
-        <span> Highest Buyer </span>
-        <span></span>
-    </div>
-    <div>
-        <span> Best Seller Product </span>
-    </div>
-    <div>
-        <span> Most Buyer Province </span>
-    </div>
-</div>
+<input type="text" id="customerId" name="customerId" value="@ViewBag.Id" hidden />
+<h6>CustomerId: @ViewBag.Id</h6>
 
-@(Html.Kendo().Grid<UserViewModel>()
+@(
+Html.Kendo().Grid<UserViewModel>()
     .Name("grid")
     .Columns(columns =>
     {
-        columns.Bound(e => e.name).Title("Name").Filterable(ftb => ftb.Cell(cell => cell.Operator("contains").SuggestionOperator(FilterType.Contains)));
-        columns.Bound(e => e.phone_number).Title("Phone").Filterable(ftb => ftb.Cell(cell => cell.Operator("eq")));
-        columns.Bound(e => e.address).Title("Address").Filterable(ftb => ftb.Cell(cell => cell.Operator("contains").SuggestionOperator(FilterType.Contains)));
-        columns.Bound(e => e.postal_code).Title("Postal").Filterable(ftb => ftb.Cell(cell => cell.Operator("eq")));
-        columns.Bound(e => e.amount).Title("Amount").Format("{0:N0} ₫").Filterable(ftb => ftb.Cell(cell => cell.Operator("eq")));
+        columns.Bound(e => e.name).Title("Name");
+        columns.Bound(e => e.phone_number).Title("Phone");
+        columns.Bound(e => e.address).Title("Address");//.Filterable(ftb => ftb.Cell(cell => cell.Operator("contains").SuggestionOperator(FilterType.Contains)));
+        columns.Bound(e => e.postal_code).Title("Postal");
+        columns.Bound(e => e.amount).Title("Amount").Format("{0:N0} ₫");//.Filterable(ftb => ftb.Cell(cell => cell.Operator("eq")));
         columns.Bound(e => e.count_order).Title("Order");
     })
     .DataSource(dataSource => dataSource
         .Ajax()
         .PageSize(10)
-        .Read(read => read.Action("Customers_Read", "HR"))
+        .Read(read => read.Action("Customers_Read", "HR").Data("additionalData"))
         .Model(model =>
             {
                 model.Id(field => field.user_id);
             })
     )
     .ClientDetailTemplateId("template")
-    .Filterable(ftb => ftb.Mode(GridFilterMode.Row))
-    .Sortable()
+    //.Filterable()
+    //.Sortable()
     .Scrollable()
     .Pageable()
 )
@@ -79,11 +70,15 @@
     )
 </script>
 
-
-
-
-
 <script>
+
+    function additionalData() {
+        console.log($("#customerId").val());
+        return {
+            id: $("#customerId").val(),
+        };
+    }
+
     function showOrderCount(data) {
         var i = 0;
         for (var item of data) {
