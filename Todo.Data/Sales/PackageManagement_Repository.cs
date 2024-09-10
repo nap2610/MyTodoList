@@ -174,16 +174,14 @@ namespace Todo.Data.Sales
         // ĐỌC CODE Ở FUNCTION NÀY -------------------
         public async Task<MessageStatus<List<ShippingViewModel>>> GetAllPackage()
         {
-            // TẠO ĐỐI TƯỢNG TRẢ VỀ
             var response = new MessageStatus<List<ShippingViewModel>>();
+
             try
             {
                 using var connection = _context.CreateConnection();
-                // QUERY BẰNG PROCEDURE (Trả về kiểu kết hợp Shipping và Order)
-                // CÂU QUERY ĐỂ TRONG QUERIES/SALES/Package
+
                 var result = await connection.QueryAsync<ShippingViewModel>(Package.GetAllPackageInfo, commandType: CommandType.StoredProcedure);
 
-                // CHECK RESULT CÓ DỮ LIỆU HAY KHÔNG
                 if (!result.Any())
                 {
                     response.success = false;
@@ -192,12 +190,10 @@ namespace Todo.Data.Sales
                 else
                 {
                     response.success = true;
-                    // GÁN DỮ LIỆU VÀO ĐỐI TƯỢNG TRẢ VỀ
                     response.data = result.ToList();
                 }
 
             } catch (Exception ex) {
-                // SET SUCCESS = FALSE VÀ MESSAGE KHI CÓ LỖI
                 response.success = false;
                 response.message = ex.Message;
             }

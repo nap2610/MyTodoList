@@ -6,6 +6,7 @@ using OfficeOpenXml;
 using Todo.Data.SalesDto;
 using System.Text;
 using Todo.Domain.ViewModels;
+using Todo.Data.shop.Service;
 
 namespace WebManagement.Controllers
 {
@@ -20,67 +21,34 @@ namespace WebManagement.Controllers
         }
 
         IPackageManagement_Repository _packageRepository;
-        public PackageController(IPackageManagement_Repository packageRepository) {
+        IPackageManagement_Service _packageService;
+        public PackageController(IPackageManagement_Repository packageRepository, IPackageManagement_Service packageService)
+        {
             _packageRepository = packageRepository;
+            _packageService = packageService;
         }
         public IActionResult Order()
         {
             return View();
         }
 
-
-
-
-        // BẮT ĐẦU ĐỌC TỪ ĐÂY (ACTION INDEX) -------------------------------
         public async Task<IActionResult> Index()
         {
-            // LẤY DỮ LIỆU SUM(), AVERAGE(), MAX() COD TỪ REPO
-            var aggr = await _packageRepository.GetAggregatePackage();
-            // BINDING BẰNG VIEWDATA
-            ViewData["Aggr"] = aggr.data;
-
-            return View(); // VIEWS/PACKAGE/INDEX
+            ViewData["Aggr"] = (await _packageRepository.GetAggregatePackage()).data;
+            return View();
         }
-        // ĐƯỢC GỌI TỪ VIEW INDEX ĐỂ LẤY DỮ LIỆU + CHỨC NĂNG FILTER
+
+        /// <summary>
+        /// Dùng cho trang Index gọi đến để lấy dữ liệu từ Service
+        /// </summary>
+        /// <param name="dsrequest"></param>
+        /// <param name="customerName"></param>
+        /// <param name="cod"></param>
+        /// <returns></returns>
         public async Task<ActionResult> TransportWithOrder_Read([DataSourceRequest] DataSourceRequest dsrequest, string customerName, string cod)
         {
-            var transportPack = await _packageRepository.GetAllPackage();
-
-            // CHECK SUCCESS TRUE HAY FALSE
-            if (!transportPack.success)
-            {
-                return Json(new DataSourceResult
-                {
-                    Errors = new[] { transportPack.message },
-                });
-            }
-
-            // TẠO ĐỐI TƯỢNG TRẢ VỀ
-            IEnumerable<ShippingViewModel> result = transportPack.data;
-
-            // CHECk CUSTOMER NAME CÓ CẦN FILTER KHÔNG
-            if (!string.IsNullOrEmpty(customerName))
-            {
-                // SET DEFAULT PAGE BẰNG 1 SAU KHI FILTER
-                dsrequest.Page = 1;
-                result = result.Where(o => o.customer_first_name.Contains(customerName));
-            }
-
-            // CHECk COD CÓ CẦN FILTER KHÔNG
-            if (!string.IsNullOrEmpty(cod)) 
-            {
-                dsrequest.Page = 1;
-                result = result.Where(o => o.cod.Equals( float.Parse(cod) ));
-            }
-
-            // TRẢ VỀ
-            return new JsonResult(result.ToDataSourceResult(dsrequest));
+            return Json( (await _packageService.GetAllPackage(dsrequest, customerName, cod)).data );
         }
-        // (ACTION INDEX) -------------------------------
-
-
-
-
 
 
         public async Task<ActionResult> OrdersByUserId_Read(int id, [DataSourceRequest] DataSourceRequest dsrequest)
@@ -123,7 +91,8 @@ namespace WebManagement.Controllers
                             if (!string.IsNullOrEmpty(userIdAndName) && userIdAndName.Contains(' '))
                             {
                                 userParts = userIdAndName.Split([' '], 2);
-                            }else
+                            }
+                            else
                             {
                                 userParts[1] = "No name";
                             }

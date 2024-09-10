@@ -14,6 +14,10 @@ namespace Todo.Data.Sales
     public interface IPackageManagement_Repository
     {
         Task<MessageStatus<List<ShippingViewModel>>> GetAllPackage();
+        /// <summary>
+        /// Lấy dữ liệu
+        /// </summary>
+        /// <returns></returns>
         Task<MessageStatus<AggregateViewModel>> GetAggregatePackage();
         Task<MessageStatus<List<Order>>> GetOrderByUserId(int id);
         Task<MessageStatus<long>> AddTransport(Shipping trans);
