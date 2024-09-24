@@ -18,60 +18,48 @@ namespace Todo.Data.shop.Repository
             _context = context;
         }
 
-        public async Task<MessageStatus<DataSourceResult>> GetAllShippingWithOrder([DataSourceRequest] DataSourceRequest dsrequest, string customerName, string cod)
+        public async Task<MessageStatus<AggregateViewModel>> GetAggregateShipping()
         {
-            var response = new MessageStatus<DataSourceResult>();
-
+            string procName = "SelectAggregateCod";
             using var connection = _context.CreateConnection();
 
-            var packages = await connection.QueryAsync<ShippingViewModel>(Package.GetAllPackageInfo, commandType: SystemData.CommandType.StoredProcedure);
+            return new MessageStatus<AggregateViewModel>()
+            {
+                success = true,
+                data = await connection.QueryFirstOrDefaultAsync<AggregateViewModel>(procName, commandType: SystemData.CommandType.StoredProcedure),
+            };
+        }
+
+        public async Task<MessageStatus<IEnumerable<ShippingViewModel>>> GetAllShippingWithOrder(int pageNumber, int pageSize, string customerName, string cod)
+        {
+            using var connection = _context.CreateConnection();
+
+            var packages = await connection.QueryAsync<ShippingViewModel>(Package.GetAllPackageInfo, 
+                new { PageNumber = pageNumber, PageSize = pageSize, CustomerName = customerName, Cod = cod }, commandType: SystemData.CommandType.StoredProcedure);
 
             if (!packages.Any())
-                return new MessageStatus<DataSourceResult>() { success = false, message = "Don't have any data" };
+                return new MessageStatus<IEnumerable<ShippingViewModel>>()
+                {
+                    success = false,
+                    message = "Data is empty",
+                };
 
-            if (!string.IsNullOrEmpty(customerName))
+            return new MessageStatus<IEnumerable<ShippingViewModel>>()
             {
-                dsrequest.Page = 1;
-                packages = packages.Where(o => o.customer_first_name.Contains(customerName));
-            }
+                success = true,
+                data = packages,
+            };
+        }
 
-            if (!string.IsNullOrEmpty(cod))
-            {
-                dsrequest.Page = 1;
-                packages = packages.Where(o => o.cod.Equals(float.Parse(cod)));
-            }
+        public async Task<MessageStatus<int>> GetShippingCount()
+        {
+            using var connection = _context.CreateConnection();
+            string sql = "SELECT COUNT(*) FROM [SHIPPING]";
 
-            response.success = true;
-            response.data = packages.ToDataSourceResult(dsrequest);
-            return response;
-            //if (!packages.Any())
-            //{
-            //    response.success = false;
-            //    response.message = "Don't have any data";
-            //    response.data = new DataSourceResult
-            //    {
-            //        Errors = new[] { response.message },
-            //    };
-            //}
-            //else
-            //{
-            //    if (!string.IsNullOrEmpty(customerName))
-            //    {
-            //        dsrequest.Page = 1;
-            //        packages = packages.Where(o => o.customer_first_name.Contains(customerName));
-            //    }
-
-            //    if (!string.IsNullOrEmpty(cod))
-            //    {
-            //        dsrequest.Page = 1;
-            //        packages = packages.Where(o => o.cod.Equals(float.Parse(cod)));
-            //    }
-
-            //    response.success = true;
-            //    response.data = packages.ToDataSourceResult(dsrequest);
-            //}
-
-            //return response;
+            return new MessageStatus<int>() { 
+                success = true,
+                data = await connection.ExecuteScalarAsync<int>(sql),
+            };
         }
     }
 

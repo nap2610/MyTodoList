@@ -1,22 +1,20 @@
 ﻿
 <input type="text" id="customerId" name="customerId" value="@ViewBag.Id" hidden />
-<h6>CustomerId: @ViewBag.Id</h6>
-
 @(
 Html.Kendo().Grid<UserViewModel>()
     .Name("grid")
     .Columns(columns =>
     {
-        columns.Bound(e => e.name).Title("Name");
-        columns.Bound(e => e.phone_number).Title("Phone");
-        columns.Bound(e => e.address).Title("Address");//.Filterable(ftb => ftb.Cell(cell => cell.Operator("contains").SuggestionOperator(FilterType.Contains)));
-        columns.Bound(e => e.postal_code).Title("Postal");
-        columns.Bound(e => e.amount).Title("Amount").Format("{0:N0} ₫");//.Filterable(ftb => ftb.Cell(cell => cell.Operator("eq")));
-        columns.Bound(e => e.count_order).Title("Order");
+        columns.Bound(e => e.name).Title("Khách hàng");
+        columns.Bound(e => e.phone_number).Title("Số điện thoại");
+        columns.Bound(e => e.address).Title("Địa chỉ").Width("250").ClientTemplate("<div class='text-ellipsis'>#= address #</div>");//.Filterable(ftb => ftb.Cell(cell => cell.Operator("contains").SuggestionOperator(FilterType.Contains)));
+        columns.Bound(e => e.postal_code).Title("Mã bưu cục").Width("100");
+        columns.Bound(e => e.amount).Title("Tổng cộng").Width("150").Format("{0:N0} ₫");//.Filterable(ftb => ftb.Cell(cell => cell.Operator("eq")));
+        columns.Bound(e => e.count_order).Title("Số lượng đơn").Width("150");
     })
     .DataSource(dataSource => dataSource
         .Ajax()
-        .PageSize(10)
+        .PageSize(20)
         .Read(read => read.Action("Customers_Read", "HR").Data("additionalData"))
         .Model(model =>
             {
@@ -27,29 +25,34 @@ Html.Kendo().Grid<UserViewModel>()
     //.Filterable()
     //.Sortable()
     .Scrollable()
-    .Pageable()
+    .Pageable(pager => pager
+        .Refresh(true)
+        .PageSizes(new[] { 10, 20, 50, 100, 200, })
+        .ButtonCount(5)
+    )
+//.Pageable()
 )
 
 <script id="template" type="text/kendo-tmpl">
     @(Html.Kendo().TabStrip()
-        .Name("tabStrip_#=id#")
-        .SelectedIndex(0)
-        .Animation(animation => animation.Open(open => open.Fade(FadeDirection.In)))
-        .Items(items =>
-        {
-            items.Add().Text("Orders").Content(@<text>
+            .Name("tabStrip_#=id#")
+            .SelectedIndex(0)
+            .Animation(animation => animation.Open(open => open.Fade(FadeDirection.In)))
+            .Items(items =>
+            {
+                items.Add().Text("Đơn hàng").Content(@<text>
                 @(Html.Kendo().Grid<Order>()
                     .Name("grid_#=id#")
                     .Columns(columns =>
                     {
-                    columns.Bound(o => o.order_name).Title("Product Name").Width("180").ClientTemplate("<div class='text-ellipsis'>\\#= order_name \\#</div>");
-                    columns.Bound(o => o.Shipping.shipp_charges).Title("Ship charges").Format("{0:N0} ₫");
-                    columns.Bound(o => o.amount).Title("Amount").Format("{0:N0} ₫");
-                    columns.Bound(o => o.payment_method).Title("Payment");
-                    columns.Bound(o => o.creation_time).Title("Time").ClientTemplate("\\#= kendo.toString(kendo.parseDate(creation_time), 'h:MM dd-MM-yyyy') \\#");
+                    columns.Bound(o => o.order_name).Title("Sản phẩm").Width("180").ClientTemplate("<div class='text-ellipsis'>\\#= order_name \\#</div>");
+                    columns.Bound(o => o.Shipping.shipp_charges).Title("Phí vận chuyển").Format("{0:N0} ₫");
+                    columns.Bound(o => o.amount).Title("Tổng cộng").Format("{0:N0} ₫");
+                    columns.Bound(o => o.payment_method).Title("Thanh toán");
+                    columns.Bound(o => o.creation_time).Title("Ngày tạo").ClientTemplate("\\#= kendo.toString(kendo.parseDate(creation_time), 'h:MM dd-MM-yyyy') \\#");
                     columns.Bound(o => o.shop_first_name).Title("Shop");
-                    columns.Bound(o => o.Shipping.status).Title("Status");
-                    columns.Bound(o => o.Shipping.problem_type).Title("Problem").ClientTemplate("\\#= Shipping.problem_type \\#");
+                    columns.Bound(o => o.Shipping.status).Title("Trạng thái");
+                    columns.Bound(o => o.Shipping.problem_type).Title("Vấn đề").ClientTemplate("\\#= Shipping.problem_type \\#");
                     })
                     .DataSource(dataSource => dataSource
                         .Ajax()
@@ -65,9 +68,45 @@ Html.Kendo().Grid<UserViewModel>()
                     .Resizable(resize => resize.Columns(true))
                     .ToClientTemplate()
                 )
-            </text>);
-        }).ToClientTemplate()
-    )
+                </text>);
+
+                items.Add().Text("Combo").Content(@<text>
+                    <div class="weather">
+                        <div class="temperature">
+                            <div class="degrees">
+                                <h2>22<span>&ordm;</span></h2>
+                                <p>24<span>&ordm;</span>&nbsp;/&nbsp;9<span>&ordm;</span></p>
+                            </div>
+                        </div>
+                        <div class="details">
+                            <div class="location">Sofia, BG</div>
+                            <div class="stats">
+                                <p>Chance of Rain: 67%</p>
+                                <p>Humidity: 92%</p>
+                            </div>
+                        </div>
+                    </div>
+                </text>);
+
+                    items.Add().Text("Lịch sử").Content(@<text>
+                    <div class="weather">
+                        <div class="temperature">
+                            <div class="degrees">
+                                <h2>22<span>&ordm;</span></h2>
+                                <p>24<span>&ordm;</span>&nbsp;/&nbsp;9<span>&ordm;</span></p>
+                            </div>
+                        </div>
+                        <div class="details">
+                            <div class="location">Sofia, BG</div>
+                            <div class="stats">
+                                <p>Chance of Rain: 67%</p>
+                                <p>Humidity: 92%</p>
+                            </div>
+                        </div>
+                    </div>
+                </text>);
+            }).ToClientTemplate()
+        )
 </script>
 
 <script>
@@ -124,28 +163,5 @@ Html.Kendo().Grid<UserViewModel>()
 </script>
 
 <style>
-    .k-detail-cell .k-tabstrip .demo-section {
-        padding: 0.2em;
-    }
 
-    .customer-details ul {
-        list-style: none;
-        font-style: italic;
-        margin: 15px;
-        padding: 0;
-    }
-
-        .customer-details ul li {
-            margin: 0;
-            line-height: 1.7em;
-        }
-
-    .customer-details label {
-        display: inline-block;
-        width: 90px;
-        padding-right: 10px;
-        text-align: right;
-        font-style: normal;
-        font-weight: bold;
-    }
 </style>

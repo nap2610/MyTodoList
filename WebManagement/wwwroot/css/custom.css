@@ -1,0 +1,64 @@
+﻿
+:root {
+    --main-background: #f5f5f5;
+    --title-blue-color: #004ac2;
+}
+
+/* GRID */
+
+/* Màu nền */
+/*.k-grid,
+.k-grid-header,
+.k-table-thead,
+.k-table-tbody .k-detail-row,
+.k-grid-footer tr,
+.k-grid-pager {
+    background: var(--title-background);
+}*/
+
+.k-grid {
+    background: red;
+}
+.k-grid-header,
+.k-grid-pager,
+.k-table-thead .k-table-row,
+.k-table-tbody .k-detail-row,
+.k-grid-footer .k-table-row,
+.k-pager-sizes .k-picker {
+    background-color: var(--main-background) !important;
+}
+/* Bỏ sọc */
+.k-grid .k-table-row.k-table-alt-row {
+    background-color: white !important;
+}
+
+.k-table-td, .k-column-title {
+}
+
+/* Tăng padding header */
+.k-grid .k-grid-md .k-table-th > .k-cell-inner > .k-link,
+.k-grid-md .k-table-th > .k-cell-inner > .k-link {
+    padding-top: 10px !important;
+}
+
+    /* Button: Page number */
+.k-pager-numbers .k-button {    
+    
+    border: 1.5px solid #37b400 !important;
+    border-radius: 100%;
+    padding-inline: 8px;
+}
+
+.k-pager-numbers .k-selected {
+    color: #4ebe1f;
+}
+/* TABSTRIP */
+/* Màu tiêu đề tap detail */
+.k-tabstrip-items .k-link {
+    color: var(--title-blue-color) !important;
+}
+
+/* Giảm padding của content */
+.k-tabstrip-content, .k-tabstrip > .k-content {
+    padding-block: 5px !important;
+}

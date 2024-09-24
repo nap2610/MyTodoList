@@ -34,7 +34,7 @@ namespace WebManagement.Controllers
 
         public async Task<IActionResult> Index()
         {
-            ViewData["Aggr"] = (await _packageRepository.GetAggregatePackage()).data;
+            //ViewData["Aggr"] = (await _packageRepository.GetAggregatePackage()).data;
             return View();
         }
 
@@ -47,7 +47,7 @@ namespace WebManagement.Controllers
         /// <returns></returns>
         public async Task<ActionResult> TransportWithOrder_Read([DataSourceRequest] DataSourceRequest dsrequest, string customerName, string cod)
         {
-            return Json( (await _packageService.GetAllPackage(dsrequest, customerName, cod)).data );
+            return Json( (await _packageService.GetAllPackage(dsrequest, customerName, cod)).data);
         }
 
 

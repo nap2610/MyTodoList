@@ -5,11 +5,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - WebManagement</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/js/bootstrap.min.js" />
-
+@*     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/js/bootstrap.min.js" /> *@
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     @* Bootstrap & jQuery: *@
-    <link href="https://kendo.cdn.telerik.com/themes/8.2.1/default/default-ocean-blue.css" rel="stylesheet" type="text/css" />
+    <link href="~/css/custom.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://kendo.cdn.telerik.com/themes/8.2.1/default/default-main.css" />
+    
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 
     @* Gritter Notify: *@
@@ -24,6 +26,15 @@
     @* License: *@
     <script src="~/kendo-ui-license.js"></script>
     <style>
+        *{
+            font-family: "Be Vietnam Pro", sans-serif;
+            font-weight: 300;
+            font-style: normal;
+            color: black;
+            font-size: 11px;
+            font-weight: 300 !important;
+        }
+
         body{
             caret-color: transparent;
         }
@@ -42,16 +53,7 @@
             white-space: nowrap !important;
         }
 
-        .k-table-td, .k-column-title {
-            font-size: 12px;
-        }
-
-        .k-column-title{
-            font-weight: 500;
-        }
-
         a {
-            color: #0bacd3;
             text-decoration: none;
         }
 

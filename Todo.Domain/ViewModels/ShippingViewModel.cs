@@ -40,6 +40,11 @@ namespace Todo.Domain.ViewModels
         public string shop_first_name { get; set; }
         public string shop_street { get; set; }
         public string shop_phone_number { get; set; }
+        public int countElement { get; set; }
+        public decimal sumElement { get; set; }
+        public float averageElement { get; set; }
+        public float minElement { get; set; }
+        public float maxElement { get; set; }
 
     }
 }
